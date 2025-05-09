@@ -22,8 +22,8 @@ function ConfigPage() {
 	const { data, isLoading, error } = useSafeConfiguration(rpcUrl, safeAddress);
 
 	return (
-		<div className="max-w-3xl mx-auto p-4 space-y-4">
-			<Link to="/" search={{ rpcUrl }} className="text-blue-600 hover:underline">
+		<div className="max-w-3xl mx-auto p-6 space-y-6">
+			<Link to="/" search={{ rpcUrl }} className="text-black hover:underline">
 				← Back
 			</Link>
 			{isLoading && <p className="text-gray-600">Loading configuration…</p>}
@@ -33,7 +33,7 @@ function ConfigPage() {
 				<Link
 					to="/enqueue"
 					search={{ rpcUrl, safe: safeAddress }}
-					className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+					className="inline-block px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition"
 				>
 					Enqueue Transaction
 				</Link>

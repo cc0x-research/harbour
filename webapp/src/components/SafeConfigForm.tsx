@@ -36,7 +36,7 @@ export default function SafeConfigForm({ onSubmit }: SafeConfigFormProps) {
 					value={rpcUrl}
 					onChange={(e) => setRpcUrl(e.target.value)}
 					placeholder="https://..."
-					className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+					className="mt-1 block w-full border border-gray-200 bg-white text-black placeholder-gray-400 rounded-md px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
 				/>
 				{errors.rpcUrl && <p className="text-red-600">{errors.rpcUrl}</p>}
 			</div>
@@ -51,14 +51,14 @@ export default function SafeConfigForm({ onSubmit }: SafeConfigFormProps) {
 					value={safeAddress}
 					onChange={(e) => setSafeAddress(e.target.value)}
 					placeholder="0x..."
-					className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+					className="mt-1 block w-full border border-gray-200 bg-white text-black placeholder-gray-400 rounded-md px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
 				/>
 				{errors.safeAddress && <p className="text-red-600">{errors.safeAddress}</p>}
 			</div>
 
 			<button
 				type="submit"
-				className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+				className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 disabled:opacity-50 transition"
 			>
 				Fetch Configuration
 			</button>

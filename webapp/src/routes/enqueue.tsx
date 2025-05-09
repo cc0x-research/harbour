@@ -54,7 +54,7 @@ export function EnqueuePage() {
 	// When config loads, default nonce
 	useEffect(() => {
 		if (configResult) {
-			setNonce(configResult.fullConfig.nonce.toString());
+			setNonce(configResult.nonce.toString());
 		}
 	}, [configResult]);
 
@@ -104,7 +104,7 @@ export function EnqueuePage() {
 			};
 
 			// Determine transaction nonce (use user input or current Safe nonce)
-			const txNonce = nonce !== "" ? BigInt(nonce) : (configResult?.fullConfig.nonce ?? BigInt(0));
+			const txNonce = nonce !== "" ? BigInt(nonce) : (configResult?.nonce ?? BigInt(0));
 
 			// Construct message according to SafeTx struct
 			const message = {
@@ -151,17 +151,21 @@ export function EnqueuePage() {
 	};
 
 	return (
-		<div className="max-w-3xl mx-auto p-4 space-y-4">
-			<h1 className="text-2xl font-bold">Enqueue Transaction</h1>
+		<div className="max-w-3xl mx-auto p-6 space-y-6">
+			<h1 className="text-2xl font-semibold text-black">Enqueue Transaction</h1>
 			<p className="text-sm text-gray-600">Safe: {safeAddress}</p>
 			<p className="text-sm text-gray-600">RPC URL: {rpcUrl}</p>
 
-			<Link to="/config" search={{ rpcUrl, safe: safeAddress }} className="text-blue-600 hover:underline">
+			<Link to="/config" search={{ rpcUrl, safe: safeAddress }} className="text-black hover:underline">
 				← Back
 			</Link>
 
 			{!primaryWallet && (
-				<button type="button" onClick={handleConnect} className="px-4 py-2 bg-blue-600 text-white rounded-md">
+				<button
+					type="button"
+					onClick={handleConnect}
+					className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition"
+				>
 					Connect Wallet
 				</button>
 			)}
@@ -170,9 +174,9 @@ export function EnqueuePage() {
 			{isLoadingConfig && <p className="text-gray-600">Loading Safe configuration…</p>}
 
 			{!isLoadingConfig && !configError && (
-				<form onSubmit={handleSubmit} className="space-y-4">
+				<form onSubmit={handleSubmit} className="space-y-6">
 					<div>
-						<label htmlFor="to" className="block font-medium">
+						<label htmlFor="to" className="block font-medium text-black">
 							To
 						</label>
 						<input
@@ -181,12 +185,12 @@ export function EnqueuePage() {
 							value={to}
 							onChange={(e) => setTo(e.target.value)}
 							placeholder="0x..."
-							className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+							className="mt-1 block w-full border border-gray-200 bg-white text-black placeholder-gray-400 rounded-md px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
 						/>
 					</div>
 
 					<div>
-						<label htmlFor="value" className="block font-medium">
+						<label htmlFor="value" className="block font-medium text-black">
 							Value (ETH)
 						</label>
 						<input
@@ -195,12 +199,12 @@ export function EnqueuePage() {
 							value={value}
 							onChange={(e) => setValue(e.target.value)}
 							placeholder="0.0"
-							className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+							className="mt-1 block w-full border border-gray-200 bg-white text-black placeholder-gray-400 rounded-md px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
 						/>
 					</div>
 
 					<div>
-						<label htmlFor="data" className="block font-medium">
+						<label htmlFor="data" className="block font-medium text-black">
 							Data (0x...)
 						</label>
 						<input
@@ -209,12 +213,12 @@ export function EnqueuePage() {
 							value={dataInput}
 							onChange={(e) => setDataInput(e.target.value)}
 							placeholder="0x..."
-							className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+							className="mt-1 block w-full border border-gray-200 bg-white text-black placeholder-gray-400 rounded-md px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
 						/>
 					</div>
 
 					<div>
-						<label htmlFor="nonce" className="block font-medium">
+						<label htmlFor="nonce" className="block font-medium text-black">
 							Nonce
 						</label>
 						<input
@@ -222,17 +226,16 @@ export function EnqueuePage() {
 							type="number"
 							value={nonce}
 							onChange={(e) => setNonce(e.target.value)}
-							className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+							className="mt-1 block w-full border border-gray-200 bg-white text-black placeholder-gray-400 rounded-md px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
 						/>
-						<p className="text-sm text-gray-500">
-							Leave blank to use current nonce {configResult?.fullConfig.nonce.toString()}
-						</p>
+						<p className="text-sm text-gray-500">Leave blank to use current nonce {configResult?.nonce.toString()}</p>
 						{nonce !== "" && !isNonceValid && <p className="text-red-600">Invalid nonce</p>}
 					</div>
 
 					<button
 						type="submit"
 						disabled={isSubmitting || !isToValid || !isValueValid || !isNonceValid}
+						className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 transition"
 						title={
 							!isToValid
 								? "Invalid 'To' address"
@@ -242,12 +245,11 @@ export function EnqueuePage() {
 										? "Invalid nonce"
 										: undefined
 						}
-						className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
 					>
 						{isSubmitting ? "Sending…" : "Sign & Enqueue"}
 					</button>
 
-					{txHash && <p className="text-green-600">Transaction Hash: {txHash}</p>}
+					{txHash && <p className="text-gray-900">Transaction Hash: {txHash}</p>}
 					{error && <p className="text-red-600">Error: {error}</p>}
 				</form>
 			)}
