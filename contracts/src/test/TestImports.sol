@@ -2,5 +2,6 @@
 /* solhint-disable no-unused-import */
 pragma solidity ^0.8.29;
 
-import {SafeProxyFactory} from "@safe-global/safe-contracts/contracts/proxies/SafeProxyFactory.sol";
-import {DebugTransactionGuard} from "@safe-global/safe-contracts/contracts/examples/guards/DebugTransactionGuard.sol";
+import {
+    SafeProxyFactory
+} from "@safe-global/safe-contracts/contracts/proxies/SafeProxyFactory.sol";
