@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { bytes32ToAddress } from "./encoding";
 import { aggregateMulticall } from "./multicall";
 
 const HARBOUR_ADDRESS = "0x5E669c1f2F9629B22dd05FBff63313a49f87D4e6";
@@ -21,8 +22,8 @@ const SAFE_ABI = [
 	"function getOwners() view returns (address[])",
 	"function getThreshold() view returns (uint256)",
 	"function nonce() view returns (uint256)",
-	"function getModulesPaginated(address start, uint256 pageSize) view returns (address[])",
-	"function getStorageAt(bytes32 offset, uint256 wordCount) view returns (bytes32)",
+	"function getModulesPaginated(address start, uint256 pageSize) view returns (address[] modules, address next)",
+	"function getStorageAt(uint256 offset, uint256 length) view returns (bytes)",
 ];
 const SAFE_INTERFACE = new ethers.Interface(SAFE_ABI);
 
@@ -52,11 +53,11 @@ async function getSafeConfiguration(
 	const configuration: SafeConfiguration = {
 		owners: SAFE_INTERFACE.decodeFunctionResult("getOwners", results[0].returnData)[0],
 		threshold: SAFE_INTERFACE.decodeFunctionResult("getThreshold", results[1].returnData)[0],
-		fallbackHandler: SAFE_INTERFACE.decodeFunctionResult("getStorageAt", results[2].returnData)[0],
+		fallbackHandler: bytes32ToAddress(SAFE_INTERFACE.decodeFunctionResult("getStorageAt", results[2].returnData)[0]),
 		nonce: SAFE_INTERFACE.decodeFunctionResult("nonce", results[3].returnData)[0],
-		guard: SAFE_INTERFACE.decodeFunctionResult("getStorageAt", results[4].returnData)[0],
-		singleton: SAFE_INTERFACE.decodeFunctionResult("getStorageAt", results[5].returnData)[0],
-		modules: SAFE_INTERFACE.decodeFunctionResult("getModules", results[6].returnData)[0],
+		guard: bytes32ToAddress(SAFE_INTERFACE.decodeFunctionResult("getStorageAt", results[4].returnData)[0]),
+		singleton: bytes32ToAddress(SAFE_INTERFACE.decodeFunctionResult("getStorageAt", results[5].returnData)[0]),
+		modules: SAFE_INTERFACE.decodeFunctionResult("getModulesPaginated", results[6].returnData)[0],
 	};
 
 	return configuration;

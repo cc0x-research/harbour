@@ -5,12 +5,16 @@ interface SafeConfigDisplayProps {
 }
 
 export default function SafeConfigDisplay({ config }: SafeConfigDisplayProps) {
-	const { owners, threshold, fallbackHandler, nonce, modules, guard } = config;
+	const { owners, threshold, fallbackHandler, nonce, modules, guard, singleton } = config;
 	return (
 		<div className="space-y-6">
 			<div className="bg-white shadow rounded-lg p-5">
 				<h2 className="text-xl font-semibold mb-4">Basic Configuration</h2>
 				<dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<div className="sm:col-span-2">
+						<dt className="font-medium text-gray-700">Safe Singleton</dt>
+						<dd className="mt-1 text-blue-600 break-all">{singleton}</dd>
+					</div>
 					<div>
 						<dt className="font-medium text-gray-700">Threshold</dt>
 						<dd className="mt-1 text-gray-900">{threshold.toString()}</dd>
