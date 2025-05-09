@@ -313,51 +313,6 @@ contract SafeInternationalHarbour {
     }
 
     /**
-     * @notice Add a signature to an existing Safe transaction.
-     *
-     * @dev Unlike `enqueueTransaction`, this function only appends a signature to a transaction
-     *      that has already been recorded. It will revert if the transaction details don't exist.
-     *
-     * @param safeAddress    Target Safe Smart-Account.
-     * @param chainId        Chain id the transaction is meant for.
-     * @param nonce          Safe nonce.
-     * @param safeTxHash     EIP-712 digest of the transaction.
-     * @param signature      65-byte ECDSA signature.
-     *
-     * @return listIndex     Index of the stored signature in the signer-specific list.
-     *
-     * @custom:events Emits {SignatureStored}.
-     */
-    function addSignature(
-        address safeAddress,
-        uint256 chainId,
-        uint256 nonce,
-        bytes32 safeTxHash,
-        bytes calldata signature
-    ) external returns (uint256 listIndex) {
-        require(signature.length == 65, InvalidECDSASignatureLength());
-        require(_txDetails[safeTxHash].stored, MissingTxDetails());
-
-        // Recover signer and split signature into (r,vs)
-        (address signer, bytes32 r, bytes32 vs) = _recoverSigner(
-            safeTxHash,
-            signature
-        );
-
-        // Store the signature
-        return
-            _storeSignature(
-                signer,
-                safeAddress,
-                chainId,
-                nonce,
-                safeTxHash,
-                r,
-                vs
-            );
-    }
-
-    /**
      * @dev Internal function to store a signature after validation.
      *
      * @param signer        Address that signed the transaction.
@@ -506,7 +461,7 @@ contract SafeInternationalHarbour {
         uint256 nonce,
         address to,
         uint256 value,
-        bytes calldata data,
+        bytes memory data,
         uint8 operation,
         uint256 safeTxGas,
         uint256 baseGas,
