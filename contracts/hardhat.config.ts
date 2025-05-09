@@ -1,7 +1,6 @@
 import type { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy";
-import "hardhat-gas-reporter";
 import "@nomicfoundation/hardhat-verify";
 import { getSingletonFactoryInfo } from "@safe-global/safe-singleton-factory/dist";
 import * as dotenv from "dotenv";
