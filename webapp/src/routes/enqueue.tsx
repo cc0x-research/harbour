@@ -1,5 +1,5 @@
 import { useSafeConfiguration } from "@/hooks/useSafeConfiguration";
-import { HARBOUR_ABI, HARBOUR_ADDRESS } from "@/lib/contract";
+import { HARBOUR_ABI, HARBOUR_ADDRESS } from "@/lib/safe";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { useConnectWallet } from "@web3-onboard/react";

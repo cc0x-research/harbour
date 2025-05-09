@@ -28,7 +28,7 @@ function ConfigPage() {
 			</Link>
 			{isLoading && <p className="text-gray-600">Loading configuration…</p>}
 			{error && <p className="text-red-600">Error: {error.message}</p>}
-			{data && <SafeConfigDisplay config={data.fullConfig} nextCursor={data.nextCursor} />}
+			{data && <SafeConfigDisplay config={data} />}
 			{data && (
 				<Link
 					to="/enqueue"

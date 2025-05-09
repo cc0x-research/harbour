@@ -1,11 +1,10 @@
-import type { SafeConfiguration } from "@/lib/contract";
+import type { SafeConfiguration } from "@/lib/safe";
 
 interface SafeConfigDisplayProps {
 	config: SafeConfiguration;
-	nextCursor: string;
 }
 
-export default function SafeConfigDisplay({ config, nextCursor }: SafeConfigDisplayProps) {
+export default function SafeConfigDisplay({ config }: SafeConfigDisplayProps) {
 	const { owners, threshold, fallbackHandler, nonce, modules, guard } = config;
 	return (
 		<div className="space-y-6">
@@ -56,10 +55,6 @@ export default function SafeConfigDisplay({ config, nextCursor }: SafeConfigDisp
 					<p className="text-gray-600">No modules enabled</p>
 				)}
 			</div>
-
-			{nextCursor !== "0x0000000000000000000000000000000000000000" && (
-				<div className="text-sm text-gray-600">More modules available, next cursor: {nextCursor}</div>
-			)}
 		</div>
 	);
 }
