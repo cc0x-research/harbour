@@ -36,6 +36,9 @@ contract SafeInternationalHarbour {
     /// Thrown if the S value of the signature is not from the lower half of the curve.
     error InvalidSignatureSValue();
 
+    /// Thrown when adding a signature for a transaction that is missing details
+    error MissingTxDetails();
+
     /// Thrown when a value doesn't fit in a uint128.
     error ValueDoesNotFitInUint128();
 
@@ -302,6 +305,59 @@ contract SafeInternationalHarbour {
                 data
             );
         }
+
+        // Mark that this signer has now signed this specific transaction hash
+        _hasSignerSignedTx[safeTxHash][signer] = true;
+
+        // Append the (r,vs) pair for this signer
+        SignatureDataWithTxHashIndex[] storage list = _sigData[signer][
+            safeAddress
+        ][chainId][nonce];
+        list.push(
+            SignatureDataWithTxHashIndex({r: r, vs: vs, txHash: safeTxHash})
+        );
+        unchecked {
+            listIndex = list.length - 1; // gas‑free length‑1 because of unchecked
+        }
+
+        emit SignatureStored(
+            signer,
+            safeAddress,
+            safeTxHash,
+            chainId,
+            nonce,
+            listIndex
+        );
+    }
+
+    function addSignature(
+        address safeAddress,
+        uint256 chainId,
+        uint256 nonce,
+        bytes32 safeTxHash,
+        bytes calldata signature
+    ) external returns (uint256 listIndex) {
+        require(signature.length == 65, InvalidECDSASignatureLength());
+        require(_txDetails[safeTxHash].stored, MissingTxDetails());
+
+        // Recover signer and split signature into (r,vs)
+        (address signer, bytes32 r, bytes32 vs) = _recoverSigner(
+            safeTxHash,
+            signature
+        );
+
+        // --- DUPLICATE TRANSACTION SIGNATURE CHECK ---
+        // Revert if this signer has already submitted *any* signature for this *exact* safeTxHash
+        require(
+            !_hasSignerSignedTx[safeTxHash][signer],
+            SignerAlreadySignedTransaction(signer, safeTxHash)
+        );
+
+        // Recover signer and split signature into (r,vs)
+        (address signer, bytes32 r, bytes32 vs) = _recoverSigner(
+            safeTxHash,
+            signature
+        );
 
         // Mark that this signer has now signed this specific transaction hash
         _hasSignerSignedTx[safeTxHash][signer] = true;
