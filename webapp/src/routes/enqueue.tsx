@@ -14,26 +14,26 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const Route = createFileRoute("/enqueue")({
 	validateSearch: zodValidator(
 		z.object({
-			rpcUrl: z.string().url("Invalid RPC URL"),
 			safe: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Safe address"),
 		}),
 	),
 	component: EnqueuePage,
 });
 
-export function EnqueuePage() {
-	// Read validated RPC URL and Safe address from search params
-	const { rpcUrl, safe: safeAddress } = Route.useSearch();
+	export function EnqueuePage() {
+		// Read validated Safe address from search params
+		const { safe: safeAddress } = Route.useSearch();
 
 	// Wallet connection
 	const [{ wallet: primaryWallet }, connect] = useConnectWallet();
+	const provider = primaryWallet ? new BrowserProvider(primaryWallet.provider) : undefined;
 
 	// Fetch current Safe configuration to get nonce
 	const {
 		data: configResult,
 		isLoading: isLoadingConfig,
 		error: configError,
-	} = useSafeConfiguration(rpcUrl, safeAddress);
+	} = useSafeConfiguration(provider, safeAddress);
 
 	// Form state
 	const [to, setTo] = useState("");
@@ -154,9 +154,9 @@ export function EnqueuePage() {
 		<div className="max-w-3xl mx-auto p-6 space-y-6">
 			<h1 className="text-2xl font-semibold text-black">Enqueue Transaction</h1>
 			<p className="text-sm text-gray-600">Safe: {safeAddress}</p>
-			<p className="text-sm text-gray-600">RPC URL: {rpcUrl}</p>
 
-			<Link to="/config" search={{ rpcUrl, safe: safeAddress }} className="text-black hover:underline">
+
+			<Link to="/config" search={{ safe: safeAddress }} className="text-black hover:underline">
 				← Back
 			</Link>
 
