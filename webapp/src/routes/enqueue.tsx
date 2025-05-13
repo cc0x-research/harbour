@@ -3,7 +3,8 @@ import { HARBOUR_ABI, HARBOUR_ADDRESS } from "@/lib/safe";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { useConnectWallet } from "@web3-onboard/react";
-import { BrowserProvider, Contract, isAddress, parseEther } from "ethers";
+import { Contract, isAddress, parseEther, type BrowserProvider } from "ethers";
+import { useBrowserProvider } from "@/hooks/useBrowserProvider";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
@@ -20,74 +21,43 @@ export const Route = createFileRoute("/enqueue")({
 	component: EnqueuePage,
 });
 
-	export function EnqueuePage() {
-		// Read validated Safe address from search params
-		const { safe: safeAddress } = Route.useSearch();
+interface EnqueueContentProps {
+	provider: BrowserProvider;
+	safeAddress: string;
+}
 
-	// Wallet connection
-	const [{ wallet: primaryWallet }, connect] = useConnectWallet();
-	const provider = primaryWallet ? new BrowserProvider(primaryWallet.provider) : undefined;
+function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
+	const { data: configResult, isLoading: isLoadingConfig, error: configError } =
+		useSafeConfiguration(provider, safeAddress);
 
-	// Fetch current Safe configuration to get nonce
-	const {
-		data: configResult,
-		isLoading: isLoadingConfig,
-		error: configError,
-	} = useSafeConfiguration(provider, safeAddress);
-
-	// Form state
 	const [to, setTo] = useState("");
 	const [value, setValue] = useState("");
 	const [dataInput, setDataInput] = useState("");
 	const [nonce, setNonce] = useState("");
 
-	// Transaction state
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [txHash, setTxHash] = useState<string>();
 	const [error, setError] = useState<string>();
 
-	// Input validation
 	const isToValid = to === "" ? false : isAddress(to);
 	const isValueValid = value === "" || !Number.isNaN(Number(value));
 	const isNonceValid = nonce === "" || !Number.isNaN(Number(nonce));
 
-	// When config loads, default nonce
 	useEffect(() => {
 		if (configResult) {
 			setNonce(configResult.nonce.toString());
 		}
 	}, [configResult]);
 
-	const handleConnect = async () => {
-		await connect();
-	};
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setError(undefined);
 
-		if (!primaryWallet) {
-			await connect();
-			if (!primaryWallet) {
-				setError("Wallet not connected");
-				return;
-			}
-		}
-
 		try {
 			setIsSubmitting(true);
-			// Initialize ethers provider and signer
-			const provider = new BrowserProvider(primaryWallet.provider);
-			const signer = await provider.getSigner();
-
-			// Determine chainId
 			const network = await provider.getNetwork();
 			const chainId = network.chainId;
-
-			// Build EIP-712 domain for Safe transaction (verifyingContract is the Safe address)
 			const domain = { chainId, verifyingContract: safeAddress };
-
-			// Typed data types matching SafeInternationalHarbour._SAFE_TX_TYPEHASH
 			const types = {
 				SafeTx: [
 					{ name: "to", type: "address" },
@@ -102,11 +72,8 @@ export const Route = createFileRoute("/enqueue")({
 					{ name: "nonce", type: "uint256" },
 				],
 			};
-
-			// Determine transaction nonce (use user input or current Safe nonce)
-			const txNonce = nonce !== "" ? BigInt(nonce) : (configResult?.nonce ?? BigInt(0));
-
-			// Construct message according to SafeTx struct
+			const txNonce =
+				nonce !== "" ? BigInt(nonce) : configResult?.nonce ?? BigInt(0);
 			const message = {
 				to,
 				value: parseEther(value || "0"),
@@ -120,10 +87,8 @@ export const Route = createFileRoute("/enqueue")({
 				nonce: txNonce,
 			};
 
-			// Sign EIP-712 typed data (safeTxHash) for Safe transaction
+			const signer = await provider.getSigner();
 			const signature: string = await signer.signTypedData(domain, types, message);
-
-			// Initialize Harbour contract and enqueue transaction
 			const harbourContract = new Contract(HARBOUR_ADDRESS, HARBOUR_ABI, signer);
 			const tx = await harbourContract.enqueueTransaction(
 				safeAddress,
@@ -155,20 +120,9 @@ export const Route = createFileRoute("/enqueue")({
 			<h1 className="text-2xl font-semibold text-black">Enqueue Transaction</h1>
 			<p className="text-sm text-gray-600">Safe: {safeAddress}</p>
 
-
 			<Link to="/config" search={{ safe: safeAddress }} className="text-black hover:underline">
 				← Back
 			</Link>
-
-			{!primaryWallet && (
-				<button
-					type="button"
-					onClick={handleConnect}
-					className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition"
-				>
-					Connect Wallet
-				</button>
-			)}
 
 			{configError && <p className="text-red-600">Error: {configError.message}</p>}
 			{isLoadingConfig && <p className="text-gray-600">Loading Safe configuration…</p>}
@@ -255,4 +209,33 @@ export const Route = createFileRoute("/enqueue")({
 			)}
 		</div>
 	);
+}
+
+export function EnqueuePage() {
+	// Read validated Safe address from search params
+	const { safe: safeAddress } = Route.useSearch();
+
+	// Wallet connection
+	const [{ wallet: primaryWallet }, connect] = useConnectWallet();
+	const provider = useBrowserProvider();
+
+	if (!primaryWallet) {
+		return (
+			<div className="max-w-3xl mx-auto p-6 space-y-6">
+				<button
+					type="button"
+					onClick={() => connect()}
+					className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition"
+				>
+					Connect Wallet
+				</button>
+			</div>
+		);
+	}
+
+	if (!provider) {
+		return <p className="text-center p-6">Initializing provider…</p>;
+	}
+
+	return <EnqueueContent provider={provider} safeAddress={safeAddress} />;
 }
