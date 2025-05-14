@@ -6,13 +6,14 @@ const HARBOUR_ADDRESS = "0x5E669c1f2F9629B22dd05FBff63313a49f87D4e6";
 
 const HARBOUR_ABI = [
 	"function enqueueTransaction(address safeAddress, uint256 chainId, uint256 nonce, address to, uint256 value, bytes data, uint8 operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address refundReceiver, bytes signature) external",
+	"function retrieveSignatures(address signerAddress, address safeAddress, uint256 chainId, uint256 nonce, uint256 start, uint256 count) external view returns (tuple(bytes32 r, bytes32 vs, bytes32 txHash)[] page, uint256 totalCount)",
 ];
 
 interface SafeConfiguration {
 	owners: string[];
-	threshold: bigint;
+	threshold: string;
 	fallbackHandler: string;
-	nonce: bigint;
+	nonce: string;
 	modules: string[];
 	guard: string;
 	singleton: string;
@@ -70,9 +71,9 @@ async function getSafeConfiguration(
 	const results = await aggregateMulticall(provider, calls);
 	const configuration: SafeConfiguration = {
 		owners: SAFE_INTERFACE.decodeFunctionResult("getOwners", results[0].returnData)[0],
-		threshold: SAFE_INTERFACE.decodeFunctionResult("getThreshold", results[1].returnData)[0],
+		threshold: String(SAFE_INTERFACE.decodeFunctionResult("getThreshold", results[1].returnData)[0]),
 		fallbackHandler: bytes32ToAddress(SAFE_INTERFACE.decodeFunctionResult("getStorageAt", results[2].returnData)[0]),
-		nonce: SAFE_INTERFACE.decodeFunctionResult("nonce", results[3].returnData)[0],
+		nonce: String(SAFE_INTERFACE.decodeFunctionResult("nonce", results[3].returnData)[0]),
 		guard: bytes32ToAddress(SAFE_INTERFACE.decodeFunctionResult("getStorageAt", results[4].returnData)[0]),
 		singleton: bytes32ToAddress(SAFE_INTERFACE.decodeFunctionResult("getStorageAt", results[5].returnData)[0]),
 		modules: SAFE_INTERFACE.decodeFunctionResult("getModulesPaginated", results[6].returnData)[0],

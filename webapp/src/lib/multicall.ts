@@ -1,4 +1,4 @@
-import type { JsonRpcProvider } from "ethers";
+import type { JsonRpcApiProvider } from "ethers";
 import { ethers } from "ethers";
 
 // https://github.com/mds1/multicall3
@@ -9,7 +9,7 @@ const MULTICALL_ABI = [
 ] as const;
 
 function aggregateMulticall(
-	provider: JsonRpcProvider,
+	provider: JsonRpcApiProvider,
 	calls: Array<{ target: string; allowFailure?: boolean; callData: string }>,
 ): Promise<{ success: boolean; returnData: string }[]> {
 	const contract = new ethers.Contract(MULTICALL_ADDRESS, MULTICALL_ABI, provider);

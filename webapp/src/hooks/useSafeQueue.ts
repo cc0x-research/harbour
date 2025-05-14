@@ -15,7 +15,7 @@ export interface FetchedSignature {
 
 export interface FetchedTransactionDetails {
 	to: string;
-	value: bigint;
+	value: string;
 	data: string;
 	operation: number;
 	// other fields from SafeTransaction struct if needed for display
@@ -29,7 +29,7 @@ export interface TransactionWithSignatures {
 }
 
 export interface NonceGroup {
-	nonce: bigint;
+	nonce: string;
 	transactions: TransactionWithSignatures[];
 }
 
@@ -48,8 +48,8 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 		[
 			string,
 			string, // safeAddress
-			bigint | undefined, // currentNonce from safeConfig
-			string[] | undefined, // owners from safeConfig
+			string, // currentNonce from safeConfig
+			string[], // owners from safeConfig
 			number, // maxNoncesToFetch
 		]
 	>({
@@ -61,7 +61,7 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 			const currentNonce = safeConfig.nonce;
 			const owners = safeConfig.owners || [];
 			// Batch retrieveSignatures calls
-			type SigMeta = { owner: string; nonce: bigint };
+			type SigMeta = { owner: string; nonce: string };
 			const sigCalls: Array<{ target: string; allowFailure: boolean; callData: string }> = [];
 			const sigMeta: SigMeta[] = [];
 			for (let i = 0; i < maxNoncesToFetch; i++) {
@@ -77,7 +77,7 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 			}
 			const sigResults = await aggregateMulticall(rpcProvider, sigCalls);
 			// Organize signatures per nonce and txHash
-			const nonceMap = new Map<bigint, Map<string, FetchedSignature[]>>();
+			const nonceMap = new Map<string, Map<string, FetchedSignature[]>>();
 			const uniqueTxHashes = new Set<string>();
 			sigResults.forEach((res, idx) => {
 				const { owner, nonce } = sigMeta[idx];
@@ -110,7 +110,7 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 				const txHash = txHashes[idx];
 				const decodedTx = iface.decodeFunctionResult("retrieveTransaction", res.returnData);
 				const to = decodedTx[0] as string;
-				const value = decodedTx[1] as bigint;
+				const value = decodedTx[1].toString();
 				const data = decodedTx[2] as string;
 				const operation = decodedTx[3] as number;
 				const stored = decodedTx[4] as boolean;

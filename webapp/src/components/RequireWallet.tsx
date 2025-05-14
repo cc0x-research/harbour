@@ -1,14 +1,11 @@
 import { useConnectWallet } from "@web3-onboard/react";
-import type { BrowserProvider } from "ethers";
-import { useBrowserProvider } from "../hooks/useBrowserProvider";
 
 interface RequireWalletProps {
-	children: (provider: BrowserProvider) => React.ReactNode;
+	children: React.ReactNode;
 }
 
 export function RequireWallet({ children }: RequireWalletProps) {
 	const [{ wallet }, connect] = useConnectWallet();
-	const provider = useBrowserProvider();
 
 	if (!wallet) {
 		return (
@@ -24,9 +21,5 @@ export function RequireWallet({ children }: RequireWalletProps) {
 		);
 	}
 
-	if (!provider) {
-		return <p className="text-center p-6">Initializing provider…</p>;
-	}
-
-	return <>{children(provider)}</>;
+	return <>{children}</>;
 }

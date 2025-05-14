@@ -3,6 +3,7 @@ import { zodValidator } from "@tanstack/zod-adapter";
 import type { BrowserProvider } from "ethers";
 import { z } from "zod";
 import { RequireWallet } from "../components/RequireWallet";
+import { useBrowserProvider } from "../hooks/useBrowserProvider";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 import { type NonceGroup, useSafeQueue } from "../hooks/useSafeQueue";
 import type { SafeConfiguration } from "../lib/safe";
@@ -109,29 +110,34 @@ export function QueuePage() {
 	const { safe: safeAddress } = Route.useSearch();
 	return (
 		<RequireWallet>
-			{(provider) => {
-				const {
-					data: safeConfig,
-					isLoading: isLoadingConfig,
-					error: configError,
-				} = useSafeConfiguration(provider, safeAddress);
-
-				if (isLoadingConfig) {
-					return <p className="text-center p-6 text-gray-600">Loading Safe configuration…</p>;
-				}
-
-				if (configError) {
-					return (
-						<p className="text-center p-6 text-red-600">Error loading Safe configuration: {configError.message}</p>
-					);
-				}
-
-				if (!safeConfig) {
-					return <p className="text-center p-6 text-gray-600">Safe configuration not available.</p>;
-				}
-
-				return <QueueContent provider={provider} safeAddress={safeAddress} safeConfig={safeConfig} />;
-			}}
+			<QueuePageInner safeAddress={safeAddress} />
 		</RequireWallet>
 	);
+}
+
+function QueuePageInner({ safeAddress }: { safeAddress: string }) {
+	const provider = useBrowserProvider();
+	if (!provider) {
+		return <p className="text-center p-6 text-gray-600">Initializing provider…</p>;
+	}
+
+	const {
+		data: safeConfig,
+		isLoading: isLoadingConfig,
+		error: configError,
+	} = useSafeConfiguration(provider, safeAddress);
+
+	if (isLoadingConfig) {
+		return <p className="text-center p-6 text-gray-600">Loading Safe configuration…</p>;
+	}
+
+	if (configError) {
+		return <p className="text-center p-6 text-red-600">Error loading Safe configuration: {configError.message}</p>;
+	}
+
+	if (!safeConfig) {
+		return <p className="text-center p-6 text-gray-600">Safe configuration not available.</p>;
+	}
+
+	return <QueueContent provider={provider} safeAddress={safeAddress} safeConfig={safeConfig} />;
 }
