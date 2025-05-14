@@ -1,10 +1,9 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { useConnectWallet } from "@web3-onboard/react";
-import { useBrowserProvider } from "../hooks/useBrowserProvider";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { z } from "zod";
-import SafeConfigDisplay from "../components/SafeConfigDisplay";
 import type { JsonRpcApiProvider } from "ethers";
+import { z } from "zod";
+import { RequireWallet } from "../components/RequireWallet";
+import SafeConfigDisplay from "../components/SafeConfigDisplay";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 
 interface ConfigContentProps {
@@ -46,28 +45,7 @@ export const Route = createFileRoute("/config")({
 	component: ConfigPage,
 });
 
-function ConfigPage() {
+export function ConfigPage() {
 	const { safe: safeAddress } = Route.useSearch();
-	const [{ wallet: primaryWallet }, connect] = useConnectWallet();
-	const provider = useBrowserProvider();
-
-	if (!primaryWallet) {
-		return (
-			<div className="max-w-3xl mx-auto p-6 space-y-6">
-				<button
-					type="button"
-					onClick={() => connect()}
-					className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition"
-				>
-					Connect Wallet
-				</button>
-			</div>
-		);
-	}
-
-	if (!provider) {
-		return <p className="text-center p-6">Initializing provider…</p>;
-	}
-
-	return <ConfigContent provider={provider} safeAddress={safeAddress} />;
+	return <RequireWallet>{(provider) => <ConfigContent provider={provider} safeAddress={safeAddress} />}</RequireWallet>;
 }

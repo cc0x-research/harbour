@@ -1,12 +1,11 @@
-import { useBrowserProvider } from "@/hooks/useBrowserProvider";
-import { useSafeConfiguration } from "@/hooks/useSafeConfiguration";
-import { type NonceGroup, useSafeQueue } from "@/hooks/useSafeQueue";
-import type { SafeConfiguration } from "@/lib/safe";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { useConnectWallet } from "@web3-onboard/react";
 import type { BrowserProvider } from "ethers";
 import { z } from "zod";
+import { RequireWallet } from "../components/RequireWallet";
+import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
+import { type NonceGroup, useSafeQueue } from "../hooks/useSafeQueue";
+import type { SafeConfiguration } from "../lib/safe";
 
 // Define the route before the component so Route is in scope
 export const Route = createFileRoute("/queue")({
@@ -108,48 +107,31 @@ function QueueContent({ provider, safeAddress, safeConfig }: QueueContentProps) 
 
 export function QueuePage() {
 	const { safe: safeAddress } = Route.useSearch();
-	const [{ wallet: primaryWallet }, connect] = useConnectWallet();
-	const provider = useBrowserProvider();
+	return (
+		<RequireWallet>
+			{(provider) => {
+				const {
+					data: safeConfig,
+					isLoading: isLoadingConfig,
+					error: configError,
+				} = useSafeConfiguration(provider, safeAddress);
 
-	// Fetch Safe configuration first
-	if (!primaryWallet) {
-		return (
-			<div className="max-w-3xl mx-auto p-6 space-y-6 text-center">
-				<h1 className="text-xl font-semibold text-black mb-4">View Transaction Queue</h1>
-				<p className="mb-4 text-gray-600">Please connect your wallet to view the transaction queue for the Safe.</p>
-				<button
-					type="button"
-					onClick={() => connect()}
-					className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition"
-				>
-					Connect Wallet
-				</button>
-			</div>
-		);
-	}
+				if (isLoadingConfig) {
+					return <p className="text-center p-6 text-gray-600">Loading Safe configuration…</p>;
+				}
 
-	if (!provider) {
-		return <p className="text-center p-6 text-gray-600">Initializing provider…</p>;
-	}
+				if (configError) {
+					return (
+						<p className="text-center p-6 text-red-600">Error loading Safe configuration: {configError.message}</p>
+					);
+				}
 
-	// At this point, provider is defined.
-	const {
-		data: safeConfig,
-		isLoading: isLoadingConfig,
-		error: configError,
-	} = useSafeConfiguration(provider, safeAddress); // Added non-null assertion for provider
+				if (!safeConfig) {
+					return <p className="text-center p-6 text-gray-600">Safe configuration not available.</p>;
+				}
 
-	if (isLoadingConfig) {
-		return <p className="text-center p-6 text-gray-600">Loading Safe configuration…</p>;
-	}
-
-	if (configError) {
-		return <p className="text-center p-6 text-red-600">Error loading Safe configuration: {configError.message}</p>;
-	}
-
-	if (!safeConfig) {
-		return <p className="text-center p-6 text-gray-600">Safe configuration not available.</p>;
-	}
-
-	return <QueueContent provider={provider} safeAddress={safeAddress} safeConfig={safeConfig} />; // Added non-null assertion for provider
+				return <QueueContent provider={provider} safeAddress={safeAddress} safeConfig={safeConfig} />;
+			}}
+		</RequireWallet>
+	);
 }

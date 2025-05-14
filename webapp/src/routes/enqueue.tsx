@@ -1,12 +1,11 @@
-import { useSafeConfiguration } from "@/hooks/useSafeConfiguration";
-import { HARBOUR_ABI, HARBOUR_ADDRESS } from "@/lib/safe";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { useConnectWallet } from "@web3-onboard/react";
-import { Contract, isAddress, parseEther, type BrowserProvider } from "ethers";
-import { useBrowserProvider } from "@/hooks/useBrowserProvider";
+import { type BrowserProvider, Contract, isAddress, parseEther } from "ethers";
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import { RequireWallet } from "../components/RequireWallet";
+import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
+import { HARBOUR_ABI, HARBOUR_ADDRESS } from "../lib/safe";
 
 // Zero address constant
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -214,30 +213,8 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 }
 
 export function EnqueuePage() {
-	// Read validated Safe address from search params
 	const { safe: safeAddress } = Route.useSearch();
-
-	// Wallet connection
-	const [{ wallet: primaryWallet }, connect] = useConnectWallet();
-	const provider = useBrowserProvider();
-
-	if (!primaryWallet) {
-		return (
-			<div className="max-w-3xl mx-auto p-6 space-y-6">
-				<button
-					type="button"
-					onClick={() => connect()}
-					className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition"
-				>
-					Connect Wallet
-				</button>
-			</div>
-		);
-	}
-
-	if (!provider) {
-		return <p className="text-center p-6">Initializing provider…</p>;
-	}
-
-	return <EnqueueContent provider={provider} safeAddress={safeAddress} />;
+	return (
+		<RequireWallet>{(provider) => <EnqueueContent provider={provider} safeAddress={safeAddress} />}</RequireWallet>
+	);
 }
