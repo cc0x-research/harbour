@@ -27,8 +27,11 @@ interface EnqueueContentProps {
 }
 
 function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
-	const { data: configResult, isLoading: isLoadingConfig, error: configError } =
-		useSafeConfiguration(provider, safeAddress);
+	const {
+		data: configResult,
+		isLoading: isLoadingConfig,
+		error: configError,
+	} = useSafeConfiguration(provider, safeAddress);
 
 	const [to, setTo] = useState("");
 	const [value, setValue] = useState("");
@@ -72,8 +75,7 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 					{ name: "nonce", type: "uint256" },
 				],
 			};
-			const txNonce =
-				nonce !== "" ? BigInt(nonce) : configResult?.nonce ?? BigInt(0);
+			const txNonce = nonce !== "" ? BigInt(nonce) : (configResult?.nonce ?? BigInt(0));
 			const message = {
 				to,
 				value: parseEther(value || "0"),

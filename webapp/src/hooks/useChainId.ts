@@ -9,16 +9,14 @@ import type { JsonRpcApiProvider } from "ethers";
  * @param provider An ethers.js JsonRpcApiProvider instance
  * @returns UseQueryResult<string, Error>
  */
-export function useChainId(
-  provider: JsonRpcApiProvider,
-): UseQueryResult<string, Error> {
-  return useQuery<string, Error>({
-    queryKey: ["chainId", provider],
-    queryFn: async () => {
-      const network = await provider.getNetwork();
-      return network.chainId.toString();
-    },
-    enabled: !!provider,
-    retry: false,
-  });
+export function useChainId(provider: JsonRpcApiProvider): UseQueryResult<string, Error> {
+	return useQuery<string, Error>({
+		queryKey: ["chainId", provider],
+		queryFn: async () => {
+			const network = await provider.getNetwork();
+			return network.chainId.toString();
+		},
+		enabled: !!provider,
+		retry: false,
+	});
 }

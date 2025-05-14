@@ -5,7 +5,6 @@ interface SafeConfigFormProps {
 }
 
 export default function SafeConfigForm({ onSubmit }: SafeConfigFormProps) {
-	
 	const [safeAddress, setSafeAddress] = useState("");
 	const [errors, setErrors] = useState<{ safeAddress?: string }>({});
 
@@ -25,8 +24,6 @@ export default function SafeConfigForm({ onSubmit }: SafeConfigFormProps) {
 
 	return (
 		<form onSubmit={handleSubmit} className="space-y-4">
-
-
 			<div>
 				<label htmlFor="safeAddress" className="block font-medium">
 					Safe Address

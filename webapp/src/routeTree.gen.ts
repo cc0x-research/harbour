@@ -11,11 +11,18 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as QueueImport } from './routes/queue'
 import { Route as EnqueueImport } from './routes/enqueue'
 import { Route as ConfigImport } from './routes/config'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const QueueRoute = QueueImport.update({
+  id: '/queue',
+  path: '/queue',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const EnqueueRoute = EnqueueImport.update({
   id: '/enqueue',
@@ -60,6 +67,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnqueueImport
       parentRoute: typeof rootRoute
     }
+    '/queue': {
+      id: '/queue'
+      path: '/queue'
+      fullPath: '/queue'
+      preLoaderRoute: typeof QueueImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -69,12 +83,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/config': typeof ConfigRoute
   '/enqueue': typeof EnqueueRoute
+  '/queue': typeof QueueRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/config': typeof ConfigRoute
   '/enqueue': typeof EnqueueRoute
+  '/queue': typeof QueueRoute
 }
 
 export interface FileRoutesById {
@@ -82,14 +98,15 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/config': typeof ConfigRoute
   '/enqueue': typeof EnqueueRoute
+  '/queue': typeof QueueRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/config' | '/enqueue'
+  fullPaths: '/' | '/config' | '/enqueue' | '/queue'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/config' | '/enqueue'
-  id: '__root__' | '/' | '/config' | '/enqueue'
+  to: '/' | '/config' | '/enqueue' | '/queue'
+  id: '__root__' | '/' | '/config' | '/enqueue' | '/queue'
   fileRoutesById: FileRoutesById
 }
 
@@ -97,12 +114,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConfigRoute: typeof ConfigRoute
   EnqueueRoute: typeof EnqueueRoute
+  QueueRoute: typeof QueueRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConfigRoute: ConfigRoute,
   EnqueueRoute: EnqueueRoute,
+  QueueRoute: QueueRoute,
 }
 
 export const routeTree = rootRoute
@@ -117,7 +136,8 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/config",
-        "/enqueue"
+        "/enqueue",
+        "/queue"
       ]
     },
     "/": {
@@ -128,6 +148,9 @@ export const routeTree = rootRoute
     },
     "/enqueue": {
       "filePath": "enqueue.tsx"
+    },
+    "/queue": {
+      "filePath": "queue.tsx"
     }
   }
 }
