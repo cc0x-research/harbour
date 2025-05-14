@@ -1,7 +1,9 @@
+import { aggregateMulticall } from "@/lib/multicall";
 import { HARBOUR_ABI, HARBOUR_ADDRESS } from "@/lib/safe";
 import type { SafeConfiguration } from "@/lib/safe";
 import { useQuery } from "@tanstack/react-query";
-import { type BrowserProvider, Contract } from "ethers";
+import { Interface } from "ethers";
+import type { BrowserProvider, JsonRpcProvider } from "ethers";
 
 // Data structures for the queue
 export interface FetchedSignature {
@@ -32,9 +34,9 @@ export interface NonceGroup {
 }
 
 interface UseSafeQueueProps {
-	provider: BrowserProvider | undefined;
+	provider: BrowserProvider;
 	safeAddress: string;
-	safeConfig: SafeConfiguration | undefined; // from useSafeConfiguration
+	safeConfig: SafeConfiguration;
 	maxNoncesToFetch?: number;
 }
 
@@ -51,74 +53,82 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 			number, // maxNoncesToFetch
 		]
 	>({
-		queryKey: ["safeQueue", safeAddress, safeConfig?.nonce, safeConfig?.owners, maxNoncesToFetch],
+		queryKey: ["safeQueue", safeAddress, safeConfig.nonce, safeConfig.owners, maxNoncesToFetch],
 		queryFn: async () => {
-			if (!provider || !safeConfig) {
-				throw new Error("Provider or Safe configuration is not available.");
-			}
-
-			const harbourContract = new Contract(HARBOUR_ADDRESS, HARBOUR_ABI, provider);
-			const fetchedNonceGroups: NonceGroup[] = [];
+			const rpcProvider = provider as unknown as JsonRpcProvider;
+			const iface = new Interface(HARBOUR_ABI);
+			const { chainId } = await rpcProvider.getNetwork();
 			const currentNonce = safeConfig.nonce;
-			const owners = safeConfig.owners;
-			const network = await provider.getNetwork();
-			const chainId = network.chainId;
-
+			const owners = safeConfig.owners || [];
+			// Batch retrieveSignatures calls
+			type SigMeta = { owner: string; nonce: bigint };
+			const sigCalls: Array<{ target: string; allowFailure: boolean; callData: string }> = [];
+			const sigMeta: SigMeta[] = [];
 			for (let i = 0; i < maxNoncesToFetch; i++) {
-				const targetNonce = currentNonce + BigInt(i);
-				const nonceGroup: NonceGroup = { nonce: targetNonce, transactions: [] };
-				const transactionsForNonceMap = new Map<string, TransactionWithSignatures>();
-
-				for (const ownerAddress of owners) {
-					const [signaturesPage] = await harbourContract.retrieveSignatures(
-						ownerAddress,
-						safeAddress,
-						chainId,
-						targetNonce,
-						0, // start
-						100, // count, assuming max 100 sigs per owner/nonce
-					);
-
-					for (const sig of signaturesPage) {
-						const safeTxHash = sig.txHash;
-						let txWithSigs = transactionsForNonceMap.get(safeTxHash);
-
-						if (!txWithSigs) {
-							const txDetailsFromContract = await harbourContract.retrieveTransaction(safeTxHash);
-
-							if (txDetailsFromContract.stored) {
-								const fetchedTxDetails: FetchedTransactionDetails = {
-									to: txDetailsFromContract.to,
-									value: BigInt(txDetailsFromContract.value.toString()),
-									data: txDetailsFromContract.data,
-									operation: Number(txDetailsFromContract.operation),
-									stored: txDetailsFromContract.stored,
-								};
-								txWithSigs = {
-									details: fetchedTxDetails,
-									signatures: [],
-									safeTxHash: safeTxHash,
-								};
-								transactionsForNonceMap.set(safeTxHash, txWithSigs);
-								nonceGroup.transactions.push(txWithSigs);
-							}
-						}
-
-						if (txWithSigs) {
-							txWithSigs.signatures.push({
-								r: sig.r,
-								vs: sig.vs,
-								txHash: sig.txHash,
-								signer: ownerAddress,
-							});
-						}
-					}
-				}
-				if (nonceGroup.transactions.length > 0) {
-					fetchedNonceGroups.push(nonceGroup);
+				const nonce = currentNonce + BigInt(i);
+				for (const owner of owners) {
+					sigCalls.push({
+						target: HARBOUR_ADDRESS,
+						allowFailure: false,
+						callData: iface.encodeFunctionData("retrieveSignatures", [owner, safeAddress, chainId, nonce, 0, 100]),
+					});
+					sigMeta.push({ owner, nonce });
 				}
 			}
-			return fetchedNonceGroups;
+			const sigResults = await aggregateMulticall(rpcProvider, sigCalls);
+			// Organize signatures per nonce and txHash
+			const nonceMap = new Map<bigint, Map<string, FetchedSignature[]>>();
+			const uniqueTxHashes = new Set<string>();
+			sigResults.forEach((res, idx) => {
+				const { owner, nonce } = sigMeta[idx];
+				const decodedSig = iface.decodeFunctionResult("retrieveSignatures", res.returnData);
+				const signaturesPage = decodedSig[0] as Array<{ r: string; vs: string; txHash: string }>;
+
+				for (const sig of signaturesPage) {
+					uniqueTxHashes.add(sig.txHash);
+					let txMap = nonceMap.get(nonce);
+					if (!txMap) {
+						txMap = new Map();
+						nonceMap.set(nonce, txMap);
+					}
+					const list = txMap.get(sig.txHash) ?? [];
+					list.push({ ...sig, signer: owner });
+					txMap.set(sig.txHash, list);
+				}
+			});
+			// Batch retrieveTransaction calls
+			const txHashes = Array.from(uniqueTxHashes);
+			const txCalls = txHashes.map((txHash) => ({
+				target: HARBOUR_ADDRESS,
+				allowFailure: false,
+				callData: iface.encodeFunctionData("retrieveTransaction", [txHash]),
+			}));
+			const txResults = await aggregateMulticall(rpcProvider, txCalls);
+			// Decode transaction details
+			const txDetailsMap = new Map<string, FetchedTransactionDetails>();
+			txResults.forEach((res, idx) => {
+				const txHash = txHashes[idx];
+				const decodedTx = iface.decodeFunctionResult("retrieveTransaction", res.returnData);
+				const to = decodedTx[0] as string;
+				const value = decodedTx[1] as bigint;
+				const data = decodedTx[2] as string;
+				const operation = decodedTx[3] as number;
+				const stored = decodedTx[4] as boolean;
+				txDetailsMap.set(txHash, { to, value, data, operation, stored });
+			});
+			// Assemble NonceGroup array
+			const result: NonceGroup[] = [];
+			nonceMap.forEach((txMap, nonce) => {
+				const group: NonceGroup = { nonce, transactions: [] };
+				txMap.forEach((sigs, txHash) => {
+					const details = txDetailsMap.get(txHash);
+					if (details?.stored) {
+						group.transactions.push({ details, signatures: sigs, safeTxHash: txHash });
+					}
+				});
+				if (group.transactions.length) result.push(group);
+			});
+			return result;
 		},
 		enabled: !!provider && !!safeConfig && !!safeConfig.nonce && !!safeConfig.owners?.length,
 		staleTime: 15 * 1000, // Refetch data considered stale after 15 seconds
