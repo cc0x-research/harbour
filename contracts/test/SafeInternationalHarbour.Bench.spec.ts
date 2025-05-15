@@ -1,7 +1,7 @@
 import type { Signer, TransactionReceipt } from "ethers";
 import { ethers } from "hardhat";
 import { SafeInternationalHarbour__factory } from "../typechain-types";
-import { EIP712_SAFE_TX_TYPE, type SafeTransaction, getSafeTransactionHash } from "./utils/safeTx";
+import { EIP712_SAFE_TX_TYPE, type SafeTransaction } from "./utils/safeTx";
 
 const logGas = (label: string, tx: TransactionReceipt): void => {
 	if (!tx || !tx.gasUsed) {
