@@ -3,7 +3,7 @@ import { zodValidator } from "@tanstack/zod-adapter";
 import { type BrowserProvider, Contract, isAddress, parseEther } from "ethers";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { RequireWallet } from "../components/RequireWallet";
+import { RequireWallet, useWalletProvider } from "../components/RequireWallet";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 import { HARBOUR_ABI, HARBOUR_ADDRESS } from "../lib/safe";
 
@@ -215,6 +215,13 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 export function EnqueuePage() {
 	const { safe: safeAddress } = Route.useSearch();
 	return (
-		<RequireWallet>{(provider) => <EnqueueContent provider={provider} safeAddress={safeAddress} />}</RequireWallet>
+		<RequireWallet>
+			<EnqueuePageInner safeAddress={safeAddress} />
+		</RequireWallet>
 	);
+}
+
+function EnqueuePageInner({ safeAddress }: { safeAddress: string }) {
+	const provider = useWalletProvider();
+	return <EnqueueContent provider={provider} safeAddress={safeAddress} />;
 }

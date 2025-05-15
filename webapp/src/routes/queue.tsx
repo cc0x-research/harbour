@@ -2,8 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import type { BrowserProvider } from "ethers";
 import { z } from "zod";
-import { RequireWallet } from "../components/RequireWallet";
-import { useBrowserProvider } from "../hooks/useBrowserProvider";
+import { RequireWallet, useWalletProvider } from "../components/RequireWallet";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 import { type NonceGroup, useSafeQueue } from "../hooks/useSafeQueue";
 import type { SafeConfiguration } from "../lib/safe";
@@ -116,11 +115,7 @@ export function QueuePage() {
 }
 
 function QueuePageInner({ safeAddress }: { safeAddress: string }) {
-	const provider = useBrowserProvider();
-	if (!provider) {
-		return <p className="text-center p-6 text-gray-600">Initializing provider…</p>;
-	}
-
+	const provider = useWalletProvider();
 	const {
 		data: safeConfig,
 		isLoading: isLoadingConfig,

@@ -14,12 +14,16 @@ export interface FetchedSignature {
 }
 
 export interface FetchedTransactionDetails {
+	stored: boolean;
+	operation: number;
 	to: string;
 	value: string;
+	safeTxGas: string;
+	baseGas: string;
+	gasPrice: string;
+	gasToken: string;
+	refundReceiver: string;
 	data: string;
-	operation: number;
-	// other fields from SafeTransaction struct if needed for display
-	stored: boolean; // To ensure we only process stored transactions
 }
 
 export interface TransactionWithSignatures {
@@ -81,23 +85,30 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 			const uniqueTxHashes = new Set<string>();
 			sigResults.forEach((res, idx) => {
 				const { owner, nonce } = sigMeta[idx];
-				const decodedSig = iface.decodeFunctionResult("retrieveSignatures", res.returnData);
-				const signaturesPage = decodedSig[0] as Array<{ r: string; vs: string; txHash: string }>;
+				const decodedSignatures = iface.decodeFunctionResult("retrieveSignatures", res.returnData)[0];
+				console.log({ decodedSignatures });
 
-				for (const sig of signaturesPage) {
+				for (const sig of decodedSignatures) {
+					const signature = {
+						r: sig[0],
+						vs: sig[1],
+						txHash: sig[2],
+						signer: owner,
+					};
 					uniqueTxHashes.add(sig.txHash);
 					let txMap = nonceMap.get(nonce);
 					if (!txMap) {
 						txMap = new Map();
 						nonceMap.set(nonce, txMap);
 					}
-					const list = txMap.get(sig.txHash) ?? [];
-					list.push({ ...sig, signer: owner });
-					txMap.set(sig.txHash, list);
+					const list = txMap.get(signature.txHash) ?? [];
+					list.push(signature);
+					txMap.set(signature.txHash, list);
 				}
 			});
 			// Batch retrieveTransaction calls
 			const txHashes = Array.from(uniqueTxHashes);
+			console.log({ txHashes });
 			const txCalls = txHashes.map((txHash) => ({
 				target: HARBOUR_ADDRESS,
 				allowFailure: false,
@@ -105,17 +116,35 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 			}));
 			const txResults = await aggregateMulticall(rpcProvider, txCalls);
 			// Decode transaction details
+
 			const txDetailsMap = new Map<string, FetchedTransactionDetails>();
+
 			txResults.forEach((res, idx) => {
 				const txHash = txHashes[idx];
 				const decodedTx = iface.decodeFunctionResult("retrieveTransaction", res.returnData);
-				const to = decodedTx[0] as string;
-				const value = decodedTx[1].toString();
-				const data = decodedTx[2] as string;
-				const operation = decodedTx[3] as number;
-				const stored = decodedTx[4] as boolean;
-				txDetailsMap.set(txHash, { to, value, data, operation, stored });
+				console.log({ decodedTx });
+				const [stored, operation, to, value, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, data] =
+					decodedTx[0];
+				console.log({ stored, operation, to, value, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, data });
+				// Convert values to strings
+				const valueStr = value.toString();
+				const safeTxGasStr = safeTxGas.toString();
+				const baseGasStr = baseGas.toString();
+				const gasPriceStr = gasPrice.toString();
+				txDetailsMap.set(txHash, {
+					to,
+					value: valueStr,
+					data,
+					operation,
+					stored,
+					safeTxGas: safeTxGasStr,
+					baseGas: baseGasStr,
+					gasPrice: gasPriceStr,
+					gasToken,
+					refundReceiver,
+				});
 			});
+			console.log({ txDetailsMap });
 			// Assemble NonceGroup array
 			const result: NonceGroup[] = [];
 			nonceMap.forEach((txMap, nonce) => {
@@ -132,6 +161,7 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 		},
 		enabled: !!provider && !!safeConfig && !!safeConfig.nonce && !!safeConfig.owners?.length,
 		staleTime: 15 * 1000, // Refetch data considered stale after 15 seconds
-		refetchInterval: 30 * 1000, // Optionally refetch every 30 seconds
+		refetchInterval: 30 * 1000, // Optionally refetch every 30 seconds,
+		throwOnError: true, // Throw error if query fails
 	});
 }

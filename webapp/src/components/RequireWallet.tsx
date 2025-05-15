@@ -1,4 +1,10 @@
+import React, { createContext, useContext } from "react";
 import { useConnectWallet } from "@web3-onboard/react";
+import { BrowserProvider } from "ethers";
+import { useBrowserProvider } from "../hooks/useBrowserProvider";
+
+// Create context for the initialized BrowserProvider
+const WalletContext = createContext<BrowserProvider | null>(null);
 
 interface RequireWalletProps {
 	children: React.ReactNode;
@@ -6,7 +12,9 @@ interface RequireWalletProps {
 
 export function RequireWallet({ children }: RequireWalletProps) {
 	const [{ wallet }, connect] = useConnectWallet();
+	const provider = useBrowserProvider();
 
+	// Prompt to connect wallet
 	if (!wallet) {
 		return (
 			<div className="max-w-3xl mx-auto p-6 text-center">
@@ -21,5 +29,23 @@ export function RequireWallet({ children }: RequireWalletProps) {
 		);
 	}
 
-	return <>{children}</>;
+	// Wait for provider initialization
+	if (!provider) {
+		return <p className="text-center p-6 text-gray-600">Initializing provider…</p>;
+	}
+
+	// Provide the ready provider via context
+	return <WalletContext.Provider value={provider}>{children}</WalletContext.Provider>;
+}
+
+/**
+ * Hook to access the BrowserProvider from context.
+ * Must be used within a RequireWallet tree.
+ */
+export function useWalletProvider(): BrowserProvider {
+	const provider = useContext(WalletContext);
+	if (!provider) {
+		throw new Error("useWalletProvider must be used within RequireWallet");
+	}
+	return provider;
 }

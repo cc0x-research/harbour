@@ -1,13 +1,13 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
-import type { JsonRpcApiProvider } from "ethers";
+import type { BrowserProvider } from "ethers";
 import { z } from "zod";
-import { RequireWallet } from "../components/RequireWallet";
+import { RequireWallet, useWalletProvider } from "../components/RequireWallet";
 import SafeConfigDisplay from "../components/SafeConfigDisplay";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 
 interface ConfigContentProps {
-	provider: JsonRpcApiProvider;
+	provider: BrowserProvider;
 	safeAddress: string;
 }
 
@@ -47,5 +47,14 @@ export const Route = createFileRoute("/config")({
 
 export function ConfigPage() {
 	const { safe: safeAddress } = Route.useSearch();
-	return <RequireWallet>{(provider) => <ConfigContent provider={provider} safeAddress={safeAddress} />}</RequireWallet>;
+	return (
+		<RequireWallet>
+			<ConfigPageInner safeAddress={safeAddress} />
+		</RequireWallet>
+	);
+}
+
+function ConfigPageInner({ safeAddress }: { safeAddress: string }) {
+	const provider = useWalletProvider();
+	return <ConfigContent provider={provider} safeAddress={safeAddress} />;
 }
