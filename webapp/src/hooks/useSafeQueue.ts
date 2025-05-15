@@ -1,38 +1,18 @@
 import { aggregateMulticall } from "@/lib/multicall";
 import { HARBOUR_ABI, HARBOUR_ADDRESS } from "@/lib/safe";
 import type { SafeConfiguration } from "@/lib/safe";
+import type { HarbourSignature, HarbourTransactionDetails } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { Interface } from "ethers";
 import type { BrowserProvider, JsonRpcProvider } from "ethers";
 
-// Data structures for the queue
-export interface FetchedSignature {
-	r: string;
-	vs: string;
-	txHash: string;
-	signer: string;
-}
-
-export interface FetchedTransactionDetails {
-	stored: boolean;
-	operation: number;
-	to: string;
-	value: string;
-	safeTxGas: string;
-	baseGas: string;
-	gasPrice: string;
-	gasToken: string;
-	refundReceiver: string;
-	data: string;
-}
-
-export interface TransactionWithSignatures {
-	details: FetchedTransactionDetails;
-	signatures: FetchedSignature[];
+interface TransactionWithSignatures {
+	details: HarbourTransactionDetails;
+	signatures: HarbourSignature[];
 	safeTxHash: string;
 }
 
-export interface NonceGroup {
+interface NonceGroup {
 	nonce: string;
 	transactions: TransactionWithSignatures[];
 }
@@ -44,7 +24,7 @@ interface UseSafeQueueProps {
 	maxNoncesToFetch?: number;
 }
 
-export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFetch = 5 }: UseSafeQueueProps) {
+function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFetch = 5 }: UseSafeQueueProps) {
 	return useQuery<
 		NonceGroup[],
 		Error,
@@ -81,12 +61,11 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 			}
 			const sigResults = await aggregateMulticall(rpcProvider, sigCalls);
 			// Organize signatures per nonce and txHash
-			const nonceMap = new Map<string, Map<string, FetchedSignature[]>>();
+			const nonceMap = new Map<string, Map<string, HarbourSignature[]>>();
 			const uniqueTxHashes = new Set<string>();
 			sigResults.forEach((res, idx) => {
 				const { owner, nonce } = sigMeta[idx];
 				const decodedSignatures = iface.decodeFunctionResult("retrieveSignatures", res.returnData)[0];
-				console.log({ decodedSignatures });
 
 				for (const sig of decodedSignatures) {
 					const signature = {
@@ -108,7 +87,6 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 			});
 			// Batch retrieveTransaction calls
 			const txHashes = Array.from(uniqueTxHashes);
-			console.log({ txHashes });
 			const txCalls = txHashes.map((txHash) => ({
 				target: HARBOUR_ADDRESS,
 				allowFailure: false,
@@ -117,15 +95,13 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 			const txResults = await aggregateMulticall(rpcProvider, txCalls);
 			// Decode transaction details
 
-			const txDetailsMap = new Map<string, FetchedTransactionDetails>();
+			const txDetailsMap = new Map<string, HarbourTransactionDetails>();
 
 			txResults.forEach((res, idx) => {
 				const txHash = txHashes[idx];
 				const decodedTx = iface.decodeFunctionResult("retrieveTransaction", res.returnData);
-				console.log({ decodedTx });
 				const [stored, operation, to, value, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, data] =
 					decodedTx[0];
-				console.log({ stored, operation, to, value, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, data });
 				// Convert values to strings
 				const valueStr = value.toString();
 				const safeTxGasStr = safeTxGas.toString();
@@ -144,7 +120,7 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 					refundReceiver,
 				});
 			});
-			console.log({ txDetailsMap });
+
 			// Assemble NonceGroup array
 			const result: NonceGroup[] = [];
 			nonceMap.forEach((txMap, nonce) => {
@@ -165,3 +141,7 @@ export function useSafeQueue({ provider, safeAddress, safeConfig, maxNoncesToFet
 		throwOnError: true, // Throw error if query fails
 	});
 }
+
+export type { NonceGroup, TransactionWithSignatures, HarbourSignature, HarbourTransactionDetails };
+
+export { useSafeQueue };
