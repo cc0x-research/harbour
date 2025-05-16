@@ -272,7 +272,6 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 	);
 }
 
-// Define the route before the component so Route is in scope
 export const Route = createFileRoute("/enqueue")({
 	validateSearch: zodValidator(
 		z.object({

@@ -12,7 +12,10 @@ const WalletIllustration = () => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     className="mx-auto mb-6"
+    role="img"
+    aria-label="Wallet illustration"
   >
+    <title>Wallet illustration</title>
     <rect x="20" y="40" width="200" height="120" rx="8" fill="#f8f8f8" />
     <rect x="40" y="20" width="160" height="40" rx="4" fill="#f0f0f0" />
     <rect x="80" y="30" width="80" height="20" rx="2" fill="#d0d0d0" />
@@ -54,7 +57,10 @@ export function RequireWallet({ children }: RequireWalletProps) {
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 							xmlns="http://www.w3.org/2000/svg"
+							role="img"
+							aria-label="Connect wallet"
 						>
+							<title>Connect wallet</title>
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
 						</svg>
 						Connect Wallet
