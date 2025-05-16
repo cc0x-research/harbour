@@ -1,7 +1,6 @@
 import { useConnectWallet } from "@web3-onboard/react";
-import type { BrowserProvider } from "ethers";
-import { createContext, useContext } from "react";
-import { useBrowserProvider } from "../hooks/useBrowserProvider";
+import { BrowserProvider } from "ethers";
+import { createContext, useContext, useMemo } from "react";
 
 const WalletIllustration = () => (
 	<svg
@@ -30,6 +29,15 @@ const WalletContext = createContext<BrowserProvider | null>(null);
 
 interface RequireWalletProps {
 	children: React.ReactNode;
+}
+
+function useBrowserProvider(): BrowserProvider | undefined {
+	const [{ wallet }] = useConnectWallet();
+
+	return useMemo(() => {
+		if (!wallet) return undefined;
+		return new BrowserProvider(wallet.provider);
+	}, [wallet]);
 }
 
 export function RequireWallet({ children }: RequireWalletProps) {
