@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import type { BrowserProvider } from "ethers";
 import { z } from "zod";
+import { safeAddressSchema } from "../lib/validators";
 import { RequireWallet, useWalletProvider } from "../components/RequireWallet";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 import { type NonceGroup, useSafeQueue } from "../hooks/useSafeQueue";
@@ -11,7 +12,7 @@ import type { SafeConfiguration } from "../lib/safe";
 export const Route = createFileRoute("/queue")({
 	validateSearch: zodValidator(
 		z.object({
-			safe: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Safe address"),
+			safe: safeAddressSchema,
 		}),
 	),
 	component: QueuePage,

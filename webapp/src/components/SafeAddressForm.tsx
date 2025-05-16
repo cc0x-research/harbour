@@ -1,17 +1,18 @@
 import { useState } from "react";
+import { ETHEREUM_ADDRESS_REGEX } from "../lib/validators";
 
-interface SafeConfigFormProps {
+interface SafeAddressFormProps {
 	onSubmit: (safeAddress: string) => void;
 }
 
-export default function SafeConfigForm({ onSubmit }: SafeConfigFormProps) {
+export default function SafeAddressForm({ onSubmit }: SafeAddressFormProps) {
 	const [safeAddress, setSafeAddress] = useState("");
 	const [errors, setErrors] = useState<{ safeAddress?: string }>({});
 
 	const validate = () => {
 		const errs: { safeAddress?: string } = {};
 		const addr = safeAddress.trim();
-		if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) errs.safeAddress = "Invalid Safe address";
+		if (!ETHEREUM_ADDRESS_REGEX.test(addr)) errs.safeAddress = "Invalid Safe address";
 		setErrors(errs);
 		return Object.keys(errs).length === 0;
 	};

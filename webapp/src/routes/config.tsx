@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import type { BrowserProvider } from "ethers";
 import { z } from "zod";
+import { safeAddressSchema } from "../lib/validators";
 import { RequireWallet, useWalletProvider } from "../components/RequireWallet";
 import SafeConfigDisplay from "../components/SafeConfigDisplay";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
@@ -35,9 +36,8 @@ function ConfigContent({ provider, safeAddress }: ConfigContentProps) {
 	);
 }
 
-// Define a Zod schema for search params
 const configSearchSchema = z.object({
-	safe: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Safe address"),
+	safe: safeAddressSchema,
 });
 
 export const Route = createFileRoute("/config")({

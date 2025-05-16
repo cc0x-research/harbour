@@ -3,6 +3,7 @@ import { zodValidator } from "@tanstack/zod-adapter";
 import { type BrowserProvider, Contract, isAddress, parseEther } from "ethers";
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import { safeAddressSchema } from "../lib/validators";
 import { RequireWallet, useWalletProvider } from "../components/RequireWallet";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 import { HARBOUR_ABI, HARBOUR_ADDRESS } from "../lib/safe";
@@ -14,7 +15,7 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const Route = createFileRoute("/enqueue")({
 	validateSearch: zodValidator(
 		z.object({
-			safe: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Safe address"),
+			safe: safeAddressSchema,
 		}),
 	),
 	component: EnqueuePage,
