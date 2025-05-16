@@ -5,26 +5,26 @@ import { useBrowserProvider } from "../hooks/useBrowserProvider";
 
 // SVG illustration component
 const WalletIllustration = () => (
-  <svg
-    width="240"
-    height="180"
-    viewBox="0 0 240 180"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className="mx-auto mb-6"
-    role="img"
-    aria-label="Wallet illustration"
-  >
-    <title>Wallet illustration</title>
-    <rect x="20" y="40" width="200" height="120" rx="8" fill="#f8f8f8" />
-    <rect x="40" y="20" width="160" height="40" rx="4" fill="#f0f0f0" />
-    <rect x="80" y="30" width="80" height="20" rx="2" fill="#d0d0d0" />
-    <rect x="60" y="90" width="120" height="8" rx="4" fill="#e0e0e0" />
-    <rect x="60" y="110" width="80" height="6" rx="3" fill="#f0f0f0" />
-    <rect x="170" y="90" width="80" height="40" rx="4" fill="#333333" />
-    <path d="M190 110H220V120H190V110Z" fill="white" />
-    <circle cx="205" cy="100" r="5" fill="white" />
-  </svg>
+	<svg
+		width="240"
+		height="180"
+		viewBox="0 0 240 180"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+		className="mx-auto mb-6"
+		role="img"
+		aria-label="Wallet illustration"
+	>
+		<title>Wallet illustration</title>
+		<rect x="20" y="40" width="200" height="120" rx="8" fill="#f8f8f8" />
+		<rect x="40" y="20" width="160" height="40" rx="4" fill="#f0f0f0" />
+		<rect x="80" y="30" width="80" height="20" rx="2" fill="#d0d0d0" />
+		<rect x="60" y="90" width="120" height="8" rx="4" fill="#e0e0e0" />
+		<rect x="60" y="110" width="80" height="6" rx="3" fill="#f0f0f0" />
+		<rect x="170" y="90" width="80" height="40" rx="4" fill="#333333" />
+		<path d="M190 110H220V120H190V110Z" fill="white" />
+		<circle cx="205" cy="100" r="5" fill="white" />
+	</svg>
 );
 
 // Create context for the initialized BrowserProvider
