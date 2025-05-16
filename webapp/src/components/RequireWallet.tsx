@@ -3,7 +3,6 @@ import type { BrowserProvider } from "ethers";
 import { createContext, useContext } from "react";
 import { useBrowserProvider } from "../hooks/useBrowserProvider";
 
-// SVG illustration component
 const WalletIllustration = () => (
 	<svg
 		width="240"
@@ -27,7 +26,6 @@ const WalletIllustration = () => (
 	</svg>
 );
 
-// Create context for the initialized BrowserProvider
 const WalletContext = createContext<BrowserProvider | null>(null);
 
 interface RequireWalletProps {
