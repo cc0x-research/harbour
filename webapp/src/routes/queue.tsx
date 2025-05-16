@@ -67,111 +67,163 @@ function QueueContent({ provider, safeAddress, safeConfig }: QueueContentProps) 
 	};
 
 	return (
-		<div className="max-w-4xl mx-auto p-6 space-y-6">
-			<h1 className="text-2xl font-semibold text-black">Transaction Queue</h1>
-			<p className="text-sm text-gray-600">Safe: {safeAddress}</p>
-
-			<BackToDashboardButton safeAddress={safeAddress} />
-
-			{queueError && <p className="text-red-600">Error loading queue: {queueError.message}</p>}
-			{isLoadingQueue && <p className="text-gray-600">Loading transaction queue…</p>}
-
-			{!isLoadingQueue && !queueError && queue && (
-				<div className="space-y-8">
-					{queue.length === 0 && (
-						<p className="text-gray-600">
-							No transactions found in the queue for the next 5 nonces from known signers.
-						</p>
-					)}
-					{queue.map((nonceGroup: NonceGroup) => (
-						<div key={nonceGroup.nonce.toString()} className="p-4 border border-gray-200 rounded-md shadow-sm bg-white">
-							<h2 className="text-xl font-semibold text-black mb-3">Nonce: {nonceGroup.nonce.toString()}</h2>
-							{nonceGroup.transactions.length === 0 && (
-								<p className="text-sm text-gray-500">No transactions for this nonce.</p>
-							)}
-							<div className="space-y-4">
-								{nonceGroup.transactions.map((txWithSigs) => {
-									const canExecute = txWithSigs.signatures.length >= Number.parseInt(safeConfig.threshold);
-									const isLoadingThisTx = isExecutionPending && executingTxHash === txWithSigs.safeTxHash;
-									const errorForThisTx = executionError && executingTxHash === txWithSigs.safeTxHash;
-									const successForThisTx = executionSuccessTxHash === txWithSigs.safeTxHash;
-
-									return (
-										<div key={txWithSigs.safeTxHash} className="p-3 border border-gray-100 rounded bg-gray-50">
-											<h3 className="text-lg font-medium text-gray-800">
-												Transaction (TxHash: {txWithSigs.safeTxHash.substring(0, 10)}...)
-											</h3>
-											<p className="text-xs text-gray-500 break-all mb-1">Full TxHash: {txWithSigs.safeTxHash}</p>
-											<div className="text-sm text-gray-700 space-y-1">
-												<p>
-													<strong>To:</strong> {txWithSigs.details.to}
-												</p>
-												<p>
-													<strong>Value:</strong> {txWithSigs.details.value.toString()} wei
-												</p>
-												<p>
-													<strong>Data:</strong>{" "}
-													{txWithSigs.details.data === "0x" || txWithSigs.details.data === ""
-														? "0x (No data)"
-														: txWithSigs.details.data}
-												</p>
-												<p>
-													<strong>Operation:</strong> {txWithSigs.details.operation === 0 ? "CALL" : "DELEGATECALL"}
-												</p>
-											</div>
-											<div className="mt-2">
-												<h4 className="text-md font-medium text-gray-700">
-													Signatures ({txWithSigs.signatures.length} / {safeConfig.threshold}):
-												</h4>
-												{txWithSigs.signatures.length === 0 && (
-													<p className="text-xs text-gray-500">No signatures from known owners yet.</p>
-												)}
-												<ul className="list-disc list-inside pl-4 text-xs text-gray-600">
-													{txWithSigs.signatures.map((sig) => (
-														<li key={sig.signer + sig.r + sig.vs} className="break-all">
-															Signer: {sig.signer} (r: {sig.r.substring(0, 10)}..., vs: {sig.vs.substring(0, 10)}...)
-														</li>
-													))}
-												</ul>
-											</div>
-
-											<div className="mt-3">
-												{canExecute && !successForThisTx && (
-													<button
-														type="button"
-														onClick={() => handleExecuteTransaction(txWithSigs)}
-														disabled={isLoadingThisTx || isExecutionPending}
-														className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-													>
-														{isLoadingThisTx ? "Executing..." : "Execute Transaction"}
-													</button>
-												)}
-												{!canExecute && (
-													<p className="text-xs text-yellow-600">
-														Needs {Number.parseInt(safeConfig.threshold) - txWithSigs.signatures.length} more
-														signature(s) to execute.
-													</p>
-												)}
-												{isLoadingThisTx && (
-													<p className="text-sm text-gray-600 mt-1">Submitting transaction to wallet...</p>
-												)}
-												{errorForThisTx && (
-													<p className="text-sm text-red-600 mt-1">Execution failed: {executionError?.message}</p>
-												)}
-												{successForThisTx && (
-													<p className="text-sm text-green-600 mt-1">
-														Transaction successfully submitted! Monitor your wallet for confirmation.
-													</p>
-												)}
-											</div>
-										</div>
-									);
-								})}
-							</div>
-						</div>
-					))}
+		<div className="min-h-screen bg-gray-50">
+			<div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+				<div className="mb-8">
+					<BackToDashboardButton safeAddress={safeAddress} />
+					<h1 className="text-3xl font-bold text-gray-900 mt-4">Transaction Queue</h1>
+					<p className="text-gray-700 mt-2">
+						Safe: <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{safeAddress}</span>
+					</p>
 				</div>
-			)}
+
+				{queueError && (
+					<div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+						<p className="text-red-700">Error loading queue: {queueError.message}</p>
+					</div>
+				)}
+				{isLoadingQueue && (
+					<div className="bg-white rounded-lg shadow-sm p-8 border border-gray-200">
+						<div className="animate-pulse space-y-4">
+							<div className="h-4 bg-gray-200 rounded w-1/4" />
+							<div className="h-10 bg-gray-200 rounded w-3/4" />
+						</div>
+					</div>
+				)}
+
+				{!isLoadingQueue && !queueError && queue && (
+					<div className="space-y-8">
+						{queue.length === 0 && (
+							<p className="text-gray-600">
+								No transactions found in the queue for the next 5 nonces from known signers.
+							</p>
+						)}
+						{queue.map((nonceGroup: NonceGroup) => (
+							<div
+								key={nonceGroup.nonce.toString()}
+								className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mb-6"
+							>
+								<h2 className="text-xl font-semibold text-gray-900 mb-4">Nonce: {nonceGroup.nonce.toString()}</h2>
+								{nonceGroup.transactions.length === 0 && (
+									<p className="text-sm text-gray-500">No transactions for this nonce.</p>
+								)}
+								<div className="space-y-4">
+									{nonceGroup.transactions.map((txWithSigs) => {
+										const canExecute = txWithSigs.signatures.length >= Number.parseInt(safeConfig.threshold);
+										const isLoadingThisTx = isExecutionPending && executingTxHash === txWithSigs.safeTxHash;
+										const errorForThisTx = executionError && executingTxHash === txWithSigs.safeTxHash;
+										const successForThisTx = executionSuccessTxHash === txWithSigs.safeTxHash;
+
+										return (
+											<div
+												key={txWithSigs.safeTxHash}
+												className="p-5 border border-gray-200 rounded-lg bg-white shadow-sm mb-4"
+											>
+												<h3 className="text-lg font-medium text-gray-900 mb-2">Transaction</h3>
+												<p className="text-xs bg-gray-50 p-2 rounded font-mono break-all mb-3">
+													TxHash: {txWithSigs.safeTxHash}
+												</p>
+												<div className="text-sm text-gray-700 space-y-1">
+													<p>
+														<strong>To:</strong> {txWithSigs.details.to}
+													</p>
+													<p>
+														<strong>Value:</strong> {txWithSigs.details.value.toString()} wei
+													</p>
+													<p>
+														<strong>Data:</strong>{" "}
+														{txWithSigs.details.data === "0x" || txWithSigs.details.data === ""
+															? "0x (No data)"
+															: txWithSigs.details.data}
+													</p>
+													<p>
+														<strong>Operation:</strong> {txWithSigs.details.operation === 0 ? "CALL" : "DELEGATECALL"}
+													</p>
+												</div>
+												<div className="mt-2">
+													<h4 className="text-md font-medium text-gray-700">
+														Signatures ({txWithSigs.signatures.length} / {safeConfig.threshold}):
+													</h4>
+													{txWithSigs.signatures.length === 0 && (
+														<p className="text-xs text-gray-500">No signatures from known owners yet.</p>
+													)}
+													<ul className="list-disc list-inside pl-4 text-xs text-gray-600">
+														{txWithSigs.signatures.map((sig) => (
+															<li key={sig.signer + sig.r + sig.vs} className="break-all">
+																Signer: {sig.signer} (r: {sig.r.substring(0, 10)}..., vs: {sig.vs.substring(0, 10)}...)
+															</li>
+														))}
+													</ul>
+												</div>
+
+												<div className="mt-3">
+													{canExecute && !successForThisTx && (
+														<button
+															type="button"
+															onClick={() => handleExecuteTransaction(txWithSigs)}
+															disabled={isLoadingThisTx || isExecutionPending}
+															className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-colors"
+														>
+															{isLoadingThisTx ? "Processing..." : "Execute Transaction"}
+														</button>
+													)}
+													{!canExecute && (
+														<p className="text-sm text-yellow-700 bg-yellow-50 px-3 py-2 rounded-md">
+															<i className="mr-1">⚠️</i> Needs{" "}
+															{Number.parseInt(safeConfig.threshold) - txWithSigs.signatures.length} more signature
+															{Number.parseInt(safeConfig.threshold) - txWithSigs.signatures.length !== 1 ? "s" : ""} to
+															execute.
+														</p>
+													)}
+													{isLoadingThisTx && (
+														<div className="mt-2 text-sm text-gray-600 flex items-center">
+															<svg
+																className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500"
+																xmlns="http://www.w3.org/2000/svg"
+																fill="none"
+																viewBox="0 0 24 24"
+																role="img"
+																aria-label="Loading"
+															>
+																<circle
+																	className="opacity-25"
+																	cx="12"
+																	cy="12"
+																	r="10"
+																	stroke="currentColor"
+																	strokeWidth="4"
+																/>
+																<path
+																	className="opacity-75"
+																	fill="currentColor"
+																	d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+																/>
+															</svg>
+															Submitting transaction...
+														</div>
+													)}
+													{errorForThisTx && (
+														<div className="mt-2 bg-red-50 border-l-4 border-red-400 p-3">
+															<p className="text-sm text-red-700">Execution failed: {executionError?.message}</p>
+														</div>
+													)}
+													{successForThisTx && (
+														<div className="mt-2 bg-green-50 border-l-4 border-green-400 p-3">
+															<p className="text-sm text-green-700">
+																✓ Transaction successfully submitted! Monitor your wallet for confirmation.
+															</p>
+														</div>
+													)}
+												</div>
+											</div>
+										);
+									})}
+								</div>
+							</div>
+						))}
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }

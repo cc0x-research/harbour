@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+import { type UseQueryResult, useQuery } from "@tanstack/react-query";
 import type { JsonRpcApiProvider } from "ethers";
 
 /**
@@ -18,5 +18,6 @@ export function useChainId(provider: JsonRpcApiProvider): UseQueryResult<string,
 		},
 		enabled: !!provider,
 		retry: false,
+		refetchInterval: 5000,
 	});
 }

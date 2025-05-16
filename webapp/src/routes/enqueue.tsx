@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { type BrowserProvider, Contract, isAddress, parseEther } from "ethers";
+import { type BrowserProvider, Contract, ethers, isAddress, parseEther } from "ethers";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { BackToDashboardButton } from "../components/BackButton";
@@ -8,19 +8,6 @@ import { RequireWallet, useWalletProvider } from "../components/RequireWallet";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 import { HARBOUR_ABI, HARBOUR_ADDRESS } from "../lib/safe";
 import { safeAddressSchema } from "../lib/validators";
-
-// Zero address constant
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-// Define the route before the component so Route is in scope
-export const Route = createFileRoute("/enqueue")({
-	validateSearch: zodValidator(
-		z.object({
-			safe: safeAddressSchema,
-		}),
-	),
-	component: EnqueuePage,
-});
 
 interface EnqueueContentProps {
 	provider: BrowserProvider;
@@ -85,8 +72,8 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 				safeTxGas: 0,
 				baseGas: 0,
 				gasPrice: 0,
-				gasToken: ZERO_ADDRESS,
-				refundReceiver: ZERO_ADDRESS,
+				gasToken: ethers.ZeroAddress,
+				refundReceiver: ethers.ZeroAddress,
 				nonce: txNonce,
 			};
 
@@ -104,8 +91,8 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 				0,
 				0,
 				0,
-				ZERO_ADDRESS,
-				ZERO_ADDRESS,
+				ethers.ZeroAddress,
+				ethers.ZeroAddress,
 				signature,
 			);
 			const receipt = await tx.wait();
@@ -228,19 +215,13 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 													fill="none"
 													viewBox="0 0 24 24"
 												>
-													<circle
-														className="opacity-25"
-														cx="12"
-														cy="12"
-														r="10"
-														stroke="currentColor"
-														strokeWidth="4"
-													></circle>
+													<title>Processing...</title>
+													<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
 													<path
 														className="opacity-75"
 														fill="currentColor"
 														d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-													></path>
+													/>
 												</svg>
 												Processing...
 											</>
@@ -253,6 +234,7 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 													viewBox="0 0 24 24"
 													xmlns="http://www.w3.org/2000/svg"
 												>
+													<title>Sign & Enqueue Transaction</title>
 													<path
 														strokeLinecap="round"
 														strokeLinejoin="round"
@@ -289,6 +271,16 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 		</div>
 	);
 }
+
+// Define the route before the component so Route is in scope
+export const Route = createFileRoute("/enqueue")({
+	validateSearch: zodValidator(
+		z.object({
+			safe: safeAddressSchema,
+		}),
+	),
+	component: EnqueuePage,
+});
 
 export function EnqueuePage() {
 	const { safe: safeAddress } = Route.useSearch();

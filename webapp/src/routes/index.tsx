@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { RequireWallet } from "../components/RequireWallet";
 import SafeAddressForm from "../components/SafeAddressForm";
 
-// SVG illustration component
 const SafeIllustration = () => (
 	<svg
 		width="240"
@@ -12,6 +11,7 @@ const SafeIllustration = () => (
 		xmlns="http://www.w3.org/2000/svg"
 		className="mx-auto mb-8"
 	>
+		<title>Safe Illustration</title>
 		<rect x="40" y="40" width="160" height="120" rx="8" fill="#f8f8f8" stroke="#333" strokeWidth="2" />
 		<rect x="60" y="60" width="120" height="80" rx="4" fill="#f0f0f0" stroke="#666" strokeWidth="1" />
 		<rect x="90" y="80" width="60" height="10" rx="2" fill="#d0d0d0" />
