@@ -3,7 +3,6 @@ import { RequireWallet } from "../components/RequireWallet";
 import SafeAddressForm from "../components/SafeAddressForm";
 
 export function App() {
-	// Wallet connection only
 	return (
 		<RequireWallet>
 			<AppInner />

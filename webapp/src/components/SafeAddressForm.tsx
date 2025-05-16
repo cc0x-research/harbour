@@ -44,7 +44,7 @@ export default function SafeAddressForm({ onSubmit }: SafeAddressFormProps) {
 				type="submit"
 				className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 disabled:opacity-50 transition"
 			>
-				Fetch Configuration
+				Load Safe
 			</button>
 		</form>
 	);

@@ -1,6 +1,6 @@
-import { createContext, useContext } from "react";
 import { useConnectWallet } from "@web3-onboard/react";
 import type { BrowserProvider } from "ethers";
+import { createContext, useContext } from "react";
 import { useBrowserProvider } from "../hooks/useBrowserProvider";
 
 // Create context for the initialized BrowserProvider
