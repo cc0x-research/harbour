@@ -7,17 +7,13 @@ init({
 	wallets: [injected],
 	chains: [
 		{
-			id: "0x2105",
-			token: "ETH",
-			label: "Base",
-			rpcUrl: "https://mainnet.base.org",
+			id: "0x64",
+			token: "XDAI",
+			label: "Gnosis Chain",
+			rpcUrl: "https://rpc.gnosischain.com",
 		},
 	],
 	connect: {
 		autoConnectLastWallet: true,
-	},
-	accountCenter: {
-		desktop: { enabled: true, position: "bottomRight" },
-		mobile: { enabled: true, position: "bottomRight" },
 	},
 });

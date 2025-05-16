@@ -1,8 +1,10 @@
 import { ethers } from "ethers";
+import { Contract } from "ethers";
 import { bytes32ToAddress, compactSignatureToFullSignature } from "./encoding";
 import { aggregateMulticall } from "./multicall";
-import type { HarbourSignature, HarbourTransactionDetails } from "./types";
+import type { FullSafeTransaction, HarbourSignature, HarbourTransactionDetails } from "./types";
 
+const HARBOUR_CHAIN_ID = 100;
 const HARBOUR_ADDRESS = "0x5E669c1f2F9629B22dd05FBff63313a49f87D4e6";
 
 const HARBOUR_ABI = [
@@ -135,5 +137,97 @@ async function executeTransaction(
 	return tx;
 }
 
-export { HARBOUR_ADDRESS, HARBOUR_ABI, getSafeConfiguration, executeTransaction };
+/**
+ * Signs a Safe transaction using EIP-712 typed data
+ * @param provider - The ethers.js provider
+ * @param transaction - The transaction request parameters
+ * @returns The signature string
+ */
+async function signSafeTransaction(
+	provider: ethers.BrowserProvider,
+	transaction: FullSafeTransaction,
+): Promise<string> {
+	const network = await provider.getNetwork();
+	const chainId = network.chainId;
+
+	const domain = {
+		chainId,
+		verifyingContract: transaction.safeAddress,
+	};
+
+	const types = {
+		SafeTx: [
+			{ name: "to", type: "address" },
+			{ name: "value", type: "uint256" },
+			{ name: "data", type: "bytes" },
+			{ name: "operation", type: "uint8" },
+			{ name: "safeTxGas", type: "uint256" },
+			{ name: "baseGas", type: "uint256" },
+			{ name: "gasPrice", type: "uint256" },
+			{ name: "gasToken", type: "address" },
+			{ name: "refundReceiver", type: "address" },
+			{ name: "nonce", type: "uint256" },
+		],
+	};
+
+	const message = {
+		to: transaction.to,
+		value: transaction.value,
+		data: transaction.data,
+		operation: 0,
+		safeTxGas: 0,
+		baseGas: 0,
+		gasPrice: 0,
+		gasToken: ethers.ZeroAddress,
+		refundReceiver: ethers.ZeroAddress,
+		nonce: transaction.nonce,
+	};
+
+	const signer = await provider.getSigner();
+	return signer.signTypedData(domain, types, message);
+}
+
+/**
+ * Enqueues a transaction to the Harbour contract
+ * @param signer - The ethers.js signer
+ * @param request - The transaction request parameters
+ * @param signature - The EIP-712 signature
+ * @returns The transaction receipt
+ */
+async function enqueueSafeTransaction(
+	signer: ethers.JsonRpcSigner,
+	transaction: FullSafeTransaction,
+	signature: string,
+) {
+	const harbourContract = new Contract(HARBOUR_ADDRESS, HARBOUR_ABI, signer);
+
+	const tx = await harbourContract.enqueueTransaction(
+		transaction.safeAddress,
+		transaction.chainId,
+		transaction.nonce,
+		transaction.to,
+		transaction.value,
+		transaction.data,
+		transaction.operation,
+		transaction.safeTxGas,
+		transaction.baseGas,
+		transaction.gasPrice,
+		transaction.gasToken,
+		transaction.refundReceiver,
+		signature,
+	);
+
+	return tx.wait();
+}
+
+export {
+	HARBOUR_CHAIN_ID,
+	HARBOUR_ADDRESS,
+	HARBOUR_ABI,
+	getSafeConfiguration,
+	executeTransaction,
+	signSafeTransaction,
+	enqueueSafeTransaction,
+};
+
 export type { SafeConfiguration };

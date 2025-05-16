@@ -1,12 +1,14 @@
+import type { FullSafeTransaction } from "@/lib/types";
 import { createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { type BrowserProvider, Contract, ethers, isAddress, parseEther } from "ethers";
+import { useSetChain } from "@web3-onboard/react";
+import { type BrowserProvider, ethers, isAddress } from "ethers";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { BackToDashboardButton } from "../components/BackButton";
 import { RequireWallet, useWalletProvider } from "../components/RequireWallet";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
-import { HARBOUR_ABI, HARBOUR_ADDRESS } from "../lib/safe";
+import { HARBOUR_CHAIN_ID, enqueueSafeTransaction, signSafeTransaction } from "../lib/safe";
 import { safeAddressSchema } from "../lib/validators";
 
 interface EnqueueContentProps {
@@ -20,6 +22,7 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 		isLoading: isLoadingConfig,
 		error: configError,
 	} = useSafeConfiguration(provider, safeAddress);
+	const [, setChain] = useSetChain();
 
 	const [to, setTo] = useState("");
 	const [value, setValue] = useState("");
@@ -47,55 +50,30 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 		try {
 			setIsSubmitting(true);
 			const network = await provider.getNetwork();
-			const chainId = network.chainId;
-			const domain = { chainId, verifyingContract: safeAddress };
-			const types = {
-				SafeTx: [
-					{ name: "to", type: "address" },
-					{ name: "value", type: "uint256" },
-					{ name: "data", type: "bytes" },
-					{ name: "operation", type: "uint8" },
-					{ name: "safeTxGas", type: "uint256" },
-					{ name: "baseGas", type: "uint256" },
-					{ name: "gasPrice", type: "uint256" },
-					{ name: "gasToken", type: "address" },
-					{ name: "refundReceiver", type: "address" },
-					{ name: "nonce", type: "uint256" },
-				],
-			};
 			const txNonce = nonce !== "" ? BigInt(nonce) : (configResult?.nonce ?? BigInt(0));
-			const message = {
+
+			setChain({ chainId: HARBOUR_CHAIN_ID.toString() });
+
+			const transaction: FullSafeTransaction = {
 				to,
-				value: parseEther(value || "0"),
+				value: value || "0",
 				data: dataInput,
+				nonce: txNonce.toString(),
+				safeAddress,
+				chainId: network.chainId.toString(),
 				operation: 0,
-				safeTxGas: 0,
-				baseGas: 0,
-				gasPrice: 0,
+				safeTxGas: "0",
+				baseGas: "0",
+				gasPrice: "0",
 				gasToken: ethers.ZeroAddress,
 				refundReceiver: ethers.ZeroAddress,
-				nonce: txNonce,
 			};
 
+			const signature = await signSafeTransaction(provider, transaction);
+
 			const signer = await provider.getSigner();
-			const signature: string = await signer.signTypedData(domain, types, message);
-			const harbourContract = new Contract(HARBOUR_ADDRESS, HARBOUR_ABI, signer);
-			const tx = await harbourContract.enqueueTransaction(
-				safeAddress,
-				chainId,
-				txNonce,
-				to,
-				parseEther(value || "0"),
-				dataInput,
-				0,
-				0,
-				0,
-				0,
-				ethers.ZeroAddress,
-				ethers.ZeroAddress,
-				signature,
-			);
-			const receipt = await tx.wait();
+			const receipt = await enqueueSafeTransaction(signer, transaction, signature);
+
 			setTxHash(receipt.transactionHash);
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : "Transaction failed";

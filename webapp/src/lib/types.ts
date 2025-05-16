@@ -1,3 +1,8 @@
+enum Operation {
+	CALL = 0,
+	DELEGATE = 1,
+}
+
 interface HarbourSignature {
 	r: string;
 	vs: string;
@@ -5,9 +10,8 @@ interface HarbourSignature {
 	signer: string;
 }
 
-interface HarbourTransactionDetails {
-	stored: boolean;
-	operation: number;
+interface SafeTransaction {
+	operation: Operation;
 	to: string;
 	value: string;
 	safeTxGas: string;
@@ -18,4 +22,14 @@ interface HarbourTransactionDetails {
 	data: string;
 }
 
-export type { HarbourSignature, HarbourTransactionDetails };
+interface HarbourTransactionDetails extends SafeTransaction {
+	stored: boolean;
+}
+
+interface FullSafeTransaction extends SafeTransaction {
+	nonce: string;
+	chainId: string;
+	safeAddress: string;
+}
+
+export type { HarbourSignature, HarbourTransactionDetails, FullSafeTransaction };
