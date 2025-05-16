@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
-import { bytes32ToAddress } from "./encoding";
+import { bytes32ToAddress, compactSignatureToFullSignature } from "./encoding";
 import { aggregateMulticall } from "./multicall";
+import type { HarbourSignature, HarbourTransactionDetails } from "./types";
 
 const HARBOUR_ADDRESS = "0x5E669c1f2F9629B22dd05FBff63313a49f87D4e6";
 
@@ -26,6 +27,7 @@ const SAFE_ABI = [
 	"function nonce() view returns (uint256)",
 	"function getModulesPaginated(address start, uint256 pageSize) view returns (address[] modules, address next)",
 	"function getStorageAt(uint256 offset, uint256 length) view returns (bytes)",
+	"function execTransaction(address to, uint256 value, bytes data, uint8 operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address refundReceiver, bytes signatures)",
 ];
 const SAFE_INTERFACE = new ethers.Interface(SAFE_ABI);
 
@@ -34,6 +36,13 @@ const GUARD_SLOT = "0x4a204f620c8c5ccdca3fd54d003badd85ba500436a431f0cbda4f558c9
 const SINGLETON_SLOT = ethers.zeroPadBytes(ethers.toBeHex(0), 32);
 const SENTINEL = "0x0000000000000000000000000000000000000001";
 
+/**
+ * Fetches the configuration of a Safe contract using multicall aggregation.
+ * @param provider - The ethers.js JSON-RPC provider.
+ * @param safeAddress - The address of the Safe contract.
+ * @param options - Optional settings, such as modulePageSize.
+ * @returns A promise that resolves to the SafeConfiguration object.
+ */
 async function getSafeConfiguration(
 	provider: ethers.JsonRpcApiProvider,
 	safeAddress: string,
@@ -83,5 +92,48 @@ async function getSafeConfiguration(
 	return configuration;
 }
 
-export { HARBOUR_ADDRESS, HARBOUR_ABI, getSafeConfiguration };
+/**
+ * Encodes an array of HarbourSignature objects into a single concatenated signature string.
+ * The signatures are sorted by signer address before encoding.
+ * @param signatures - Array of HarbourSignature objects to encode.
+ * @returns The concatenated signature string.
+ */
+function encodeSignatures(signatures: HarbourSignature[]): string {
+	signatures.sort((a, b) => a.signer.localeCompare(b.signer));
+
+	return `0x${signatures.map((signature) => compactSignatureToFullSignature(signature).slice(2)).join("")}`;
+}
+
+/**
+ * Executes a transaction on the Safe contract.
+ * @param provider - The ethers.js JSON-RPC provider.
+ * @param safeAddress - The address of the Safe contract.
+ * @param transaction - The transaction details, including signatures.
+ * @returns A promise that resolves to the transaction response.
+ */
+async function executeTransaction(
+	signer: ethers.JsonRpcSigner,
+	safeAddress: string,
+	transaction: HarbourTransactionDetails & { signatures: HarbourSignature[] },
+) {
+	const safe = new ethers.Contract(safeAddress, SAFE_ABI, signer);
+	const signatureBytes = encodeSignatures(transaction.signatures);
+
+	const tx = await safe.execTransaction(
+		transaction.to,
+		transaction.value,
+		transaction.data,
+		transaction.operation,
+		transaction.safeTxGas,
+		transaction.baseGas,
+		transaction.gasPrice,
+		transaction.gasToken,
+		transaction.refundReceiver,
+		signatureBytes,
+	);
+
+	return tx;
+}
+
+export { HARBOUR_ADDRESS, HARBOUR_ABI, getSafeConfiguration, executeTransaction };
 export type { SafeConfiguration };
