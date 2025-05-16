@@ -52,45 +52,47 @@ function DashboardContent({ provider, safeAddress }: DashboardContentProps) {
 	const { data: config, isLoading, error } = useSafeConfiguration(provider, safeAddress);
 
 	return (
-		<div className="max-w-5xl mx-auto p-6 space-y-8">
-			<div>
-				<BackButton to="/">Back to home</BackButton>
-				<h1 className="text-3xl font-bold text-gray-900">Safe Dashboard</h1>
-				<p className="text-gray-600">Manage your Safe and execute transactions</p>
-			</div>
+		<div className="min-h-screen bg-gray-50">
+			<div className="max-w-5xl mx-auto p-6 space-y-8">
+				<div>
+					<BackButton to="/">Back to home</BackButton>
+					<h1 className="text-3xl font-bold text-gray-900">Safe Dashboard</h1>
+					<p className="text-gray-600">Manage your Safe and execute transactions</p>
+				</div>
 
-			{isLoading && <p className="text-gray-600">Loading configuration…</p>}
-			{error && <p className="text-red-600">Error: {error.message}</p>}
+				{isLoading && <p className="text-gray-600">Loading configuration…</p>}
+				{error && <p className="text-red-600">Error: {error.message}</p>}
 
-			{config && (
-				<>
-					<div className="grid md:grid-cols-2 gap-6">
-						<ActionCard
-							title="Transaction Queue"
-							description="View and execute pending transactions that are ready to be executed."
-							icon={ScrollText}
-							ctaText="View Queue"
-							to="/queue"
-							search={{ safe: safeAddress }}
-						/>
-						<ActionCard
-							title="New Transaction"
-							description="Create and enqueue a new transaction for your Safe."
-							icon={PlusCircle}
-							ctaText="Create Transaction"
-							to="/enqueue"
-							search={{ safe: safeAddress }}
-						/>
-					</div>
-
-					<div className="mt-10">
-						<h2 className="text-xl font-semibold text-gray-900 mb-4">Safe Configuration</h2>
-						<div className="bg-white p-6 border border-gray-200 rounded-lg">
-							<SafeConfigDisplay config={config} />
+				{config && (
+					<>
+						<div className="grid md:grid-cols-2 gap-6">
+							<ActionCard
+								title="Transaction Queue"
+								description="View and execute pending transactions that are ready to be executed."
+								icon={ScrollText}
+								ctaText="View Queue"
+								to="/queue"
+								search={{ safe: safeAddress }}
+							/>
+							<ActionCard
+								title="New Transaction"
+								description="Create and enqueue a new transaction for your Safe."
+								icon={PlusCircle}
+								ctaText="Create Transaction"
+								to="/enqueue"
+								search={{ safe: safeAddress }}
+							/>
 						</div>
-					</div>
-				</>
-			)}
+
+						<div className="mt-10">
+							<h2 className="text-xl font-semibold text-gray-900 mb-4">Safe Configuration</h2>
+							<div className="bg-white p-6 border border-gray-200 rounded-lg">
+								<SafeConfigDisplay config={config} />
+							</div>
+						</div>
+					</>
+				)}
+			</div>
 		</div>
 	);
 }
