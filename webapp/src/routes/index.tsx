@@ -14,7 +14,7 @@ export function App() {
 function AppInner() {
 	const navigate = useNavigate();
 	const handleSubmit = (safe: string) => {
-		navigate({ to: "/config", search: { safe } });
+		navigate({ to: "/dashboard", search: { safe } });
 	};
 	return (
 		<div className="max-w-3xl mx-auto p-6">

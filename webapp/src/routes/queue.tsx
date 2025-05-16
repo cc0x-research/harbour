@@ -1,14 +1,15 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import type { BrowserProvider } from "ethers";
 import { useState } from "react";
 import { z } from "zod";
-import { safeAddressSchema } from "../lib/validators";
+import { BackToDashboardButton } from "../components/BackButton";
 import { RequireWallet, useWalletProvider } from "../components/RequireWallet";
 import { type TransactionToExecute, useExecuteTransaction } from "../hooks/useExecuteTransaction";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 import { type NonceGroup, useSafeQueue } from "../hooks/useSafeQueue";
 import type { SafeConfiguration } from "../lib/safe";
+import { safeAddressSchema } from "../lib/validators";
 
 // Define the route before the component so Route is in scope
 export const Route = createFileRoute("/queue")({
@@ -70,9 +71,7 @@ function QueueContent({ provider, safeAddress, safeConfig }: QueueContentProps) 
 			<h1 className="text-2xl font-semibold text-black">Transaction Queue</h1>
 			<p className="text-sm text-gray-600">Safe: {safeAddress}</p>
 
-			<Link to="/config" search={{ safe: safeAddress }} className="text-black hover:underline">
-				← Back to Configuration
-			</Link>
+			<BackToDashboardButton safeAddress={safeAddress} />
 
 			{queueError && <p className="text-red-600">Error loading queue: {queueError.message}</p>}
 			{isLoadingQueue && <p className="text-gray-600">Loading transaction queue…</p>}

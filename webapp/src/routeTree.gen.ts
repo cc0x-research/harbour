@@ -13,7 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as QueueImport } from './routes/queue'
 import { Route as EnqueueImport } from './routes/enqueue'
-import { Route as ConfigImport } from './routes/config'
+import { Route as DashboardImport } from './routes/dashboard'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
@@ -30,9 +30,9 @@ const EnqueueRoute = EnqueueImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const ConfigRoute = ConfigImport.update({
-  id: '/config',
-  path: '/config',
+const DashboardRoute = DashboardImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -53,11 +53,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/config': {
-      id: '/config'
-      path: '/config'
-      fullPath: '/config'
-      preLoaderRoute: typeof ConfigImport
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardImport
       parentRoute: typeof rootRoute
     }
     '/enqueue': {
@@ -81,14 +81,14 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/config': typeof ConfigRoute
+  '/dashboard': typeof DashboardRoute
   '/enqueue': typeof EnqueueRoute
   '/queue': typeof QueueRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/config': typeof ConfigRoute
+  '/dashboard': typeof DashboardRoute
   '/enqueue': typeof EnqueueRoute
   '/queue': typeof QueueRoute
 }
@@ -96,30 +96,30 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/config': typeof ConfigRoute
+  '/dashboard': typeof DashboardRoute
   '/enqueue': typeof EnqueueRoute
   '/queue': typeof QueueRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/config' | '/enqueue' | '/queue'
+  fullPaths: '/' | '/dashboard' | '/enqueue' | '/queue'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/config' | '/enqueue' | '/queue'
-  id: '__root__' | '/' | '/config' | '/enqueue' | '/queue'
+  to: '/' | '/dashboard' | '/enqueue' | '/queue'
+  id: '__root__' | '/' | '/dashboard' | '/enqueue' | '/queue'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ConfigRoute: typeof ConfigRoute
+  DashboardRoute: typeof DashboardRoute
   EnqueueRoute: typeof EnqueueRoute
   QueueRoute: typeof QueueRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ConfigRoute: ConfigRoute,
+  DashboardRoute: DashboardRoute,
   EnqueueRoute: EnqueueRoute,
   QueueRoute: QueueRoute,
 }
@@ -135,7 +135,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/config",
+        "/dashboard",
         "/enqueue",
         "/queue"
       ]
@@ -143,8 +143,8 @@ export const routeTree = rootRoute
     "/": {
       "filePath": "index.tsx"
     },
-    "/config": {
-      "filePath": "config.tsx"
+    "/dashboard": {
+      "filePath": "dashboard.tsx"
     },
     "/enqueue": {
       "filePath": "enqueue.tsx"
