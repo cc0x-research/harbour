@@ -7,7 +7,7 @@ import { z } from "zod";
 import { RequireWallet, useWalletProvider } from "../components/RequireWallet";
 import SafeConfigDisplay from "../components/SafeConfigDisplay";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
-import { safeAddressSchema } from "../lib/validators";
+import { safeAddressSchema, chainIdSchema } from "../lib/validators";
 
 interface DashboardContentProps {
 	provider: BrowserProvider;
@@ -100,7 +100,7 @@ function DashboardContent({ provider, safeAddress }: DashboardContentProps) {
 
 const configSearchSchema = z.object({
 	safe: safeAddressSchema,
-	chainId: z.string(),
+	chainId: chainIdSchema,
 });
 
 export const Route = createFileRoute("/dashboard")({

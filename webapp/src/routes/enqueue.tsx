@@ -9,7 +9,7 @@ import { BackToDashboardButton } from "../components/BackButton";
 import { RequireWallet, useWalletProvider } from "../components/RequireWallet";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 import { HARBOUR_CHAIN_ID, enqueueSafeTransaction, signSafeTransaction } from "../lib/safe";
-import { safeAddressSchema } from "../lib/validators";
+import { safeAddressSchema, chainIdSchema } from "../lib/validators";
 
 interface EnqueueContentProps {
 	provider: BrowserProvider;
@@ -254,7 +254,7 @@ export const Route = createFileRoute("/enqueue")({
 	validateSearch: zodValidator(
 		z.object({
 			safe: safeAddressSchema,
-			chainId: z.string(),
+			chainId: chainIdSchema,
 		}),
 	),
 	component: EnqueuePage,

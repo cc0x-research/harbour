@@ -9,14 +9,14 @@ import { type TransactionToExecute, useExecuteTransaction } from "../hooks/useEx
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 import { type NonceGroup, useSafeQueue } from "../hooks/useSafeQueue";
 import type { SafeConfiguration } from "../lib/safe";
-import { safeAddressSchema } from "../lib/validators";
+import { safeAddressSchema, chainIdSchema } from "../lib/validators";
 
 // Define the route before the component so Route is in scope
 export const Route = createFileRoute("/queue")({
 	validateSearch: zodValidator(
 		z.object({
 			safe: safeAddressSchema,
-			chainId: z.string(),
+			chainId: chainIdSchema,
 		}),
 	),
 	component: QueuePage,
