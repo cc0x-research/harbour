@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 interface BackButtonProps {
 	to: string;
-	search?: Record<string, string>;
+	search?: Record<string, string | number>;
 	children: React.ReactNode;
 	className?: string;
 }
@@ -15,9 +15,9 @@ export function BackButton({ to, search, children, className = "" }: BackButtonP
 	);
 }
 
-export function BackToDashboardButton({ safeAddress }: { safeAddress: string }) {
+export function BackToDashboardButton({ safeAddress, chainId }: { safeAddress: string; chainId: string }) {
 	return (
-		<BackButton to="/dashboard" search={{ safe: safeAddress }}>
+		<BackButton to="/dashboard" search={{ safe: safeAddress, chainId }}>
 			Back to Dashboard
 		</BackButton>
 	);

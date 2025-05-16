@@ -12,6 +12,7 @@ import { safeAddressSchema } from "../lib/validators";
 interface DashboardContentProps {
 	provider: BrowserProvider;
 	safeAddress: string;
+	chainId: string;
 }
 
 const ActionCard = ({
@@ -99,6 +100,7 @@ function DashboardContent({ provider, safeAddress }: DashboardContentProps) {
 
 const configSearchSchema = z.object({
 	safe: safeAddressSchema,
+	chainId: z.string(),
 });
 
 export const Route = createFileRoute("/dashboard")({
@@ -107,15 +109,15 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 export function DashboardPage() {
-	const { safe: safeAddress } = Route.useSearch();
+	const { safe: safeAddress, chainId } = Route.useSearch();
 	return (
 		<RequireWallet>
-			<DashboardPageInner safeAddress={safeAddress} />
+			<DashboardPageInner safeAddress={safeAddress} chainId={chainId} />
 		</RequireWallet>
 	);
 }
 
-function DashboardPageInner({ safeAddress }: { safeAddress: string }) {
+function DashboardPageInner({ safeAddress, chainId }: { safeAddress: string; chainId: string }) {
 	const provider = useWalletProvider();
-	return <DashboardContent provider={provider} safeAddress={safeAddress} />;
+	return <DashboardContent provider={provider} safeAddress={safeAddress} chainId={chainId} />;
 }

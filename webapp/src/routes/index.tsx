@@ -32,8 +32,8 @@ export function App() {
 
 function AppInner() {
 	const navigate = useNavigate();
-	const handleSubmit = (safe: string) => {
-		navigate({ to: "/dashboard", search: { safe } });
+	const handleSubmit = (safe: string, chainId: string) => {
+		navigate({ to: "/dashboard", search: { safe, chainId } });
 	};
 
 	return (

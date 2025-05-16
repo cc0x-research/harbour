@@ -2,17 +2,20 @@ import { useState } from "react";
 import { ETHEREUM_ADDRESS_REGEX } from "../lib/validators";
 
 interface SafeAddressFormProps {
-	onSubmit: (safeAddress: string) => void;
+	onSubmit: (safeAddress: string, chainId: string) => void;
 }
 
 export default function SafeAddressForm({ onSubmit }: SafeAddressFormProps) {
 	const [safeAddress, setSafeAddress] = useState("");
-	const [errors, setErrors] = useState<{ safeAddress?: string }>({});
+	const [chainId, setChainId] = useState<string>("1");
+	const [errors, setErrors] = useState<{ safeAddress?: string; chainId?: string }>({});
 
 	const validate = () => {
-		const errs: { safeAddress?: string } = {};
+		const errs: { safeAddress?: string; chainId?: string } = {};
 		const addr = safeAddress.trim();
 		if (!ETHEREUM_ADDRESS_REGEX.test(addr)) errs.safeAddress = "Invalid Safe address";
+		const chainIdNum = Number.parseInt(chainId, 10);
+		if (Number.isNaN(chainIdNum) || chainIdNum <= 0) errs.chainId = "Chain ID must be a positive number";
 		setErrors(errs);
 		return Object.keys(errs).length === 0;
 	};
@@ -20,7 +23,7 @@ export default function SafeAddressForm({ onSubmit }: SafeAddressFormProps) {
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!validate()) return;
-		onSubmit(safeAddress.trim());
+		onSubmit(safeAddress.trim(), chainId);
 	};
 
 	return (
@@ -38,6 +41,23 @@ export default function SafeAddressForm({ onSubmit }: SafeAddressFormProps) {
 					className="mt-1 block w-full border border-gray-200 bg-white text-black placeholder-gray-400 rounded-md px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
 				/>
 				{errors.safeAddress && <p className="text-red-600">{errors.safeAddress}</p>}
+			</div>
+
+			<div>
+				<label htmlFor="chainId" className="block font-medium">
+					Chain ID
+				</label>
+				<input
+					id="chainId"
+					type="number"
+					value={chainId}
+					onChange={(e) => setChainId(e.target.value)}
+					placeholder="1"
+					min="1"
+					step="1"
+					className="mt-1 block w-full border border-gray-200 bg-white text-black placeholder-gray-400 rounded-md px-3 py-2 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+				/>
+				{errors.chainId && <p className="text-red-600">{errors.chainId}</p>}
 			</div>
 
 			<button

@@ -16,6 +16,7 @@ export const Route = createFileRoute("/queue")({
 	validateSearch: zodValidator(
 		z.object({
 			safe: safeAddressSchema,
+			chainId: z.string(),
 		}),
 	),
 	component: QueuePage,
@@ -25,9 +26,10 @@ interface QueueContentProps {
 	provider: BrowserProvider;
 	safeAddress: string;
 	safeConfig: SafeConfiguration;
+	chainId: string;
 }
 
-function QueueContent({ provider, safeAddress, safeConfig }: QueueContentProps) {
+function QueueContent({ provider, safeAddress, safeConfig, chainId }: QueueContentProps) {
 	const {
 		data: queue,
 		isLoading: isLoadingQueue,
@@ -70,7 +72,7 @@ function QueueContent({ provider, safeAddress, safeConfig }: QueueContentProps) 
 		<div className="min-h-screen bg-gray-50">
 			<div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mb-8">
-					<BackToDashboardButton safeAddress={safeAddress} />
+					<BackToDashboardButton safeAddress={safeAddress} chainId={chainId} />
 					<h1 className="text-3xl font-bold text-gray-900 mt-4">Transaction Queue</h1>
 					<p className="text-gray-700 mt-2">
 						Safe: <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{safeAddress}</span>
@@ -229,15 +231,15 @@ function QueueContent({ provider, safeAddress, safeConfig }: QueueContentProps) 
 }
 
 export function QueuePage() {
-	const { safe: safeAddress } = Route.useSearch();
+	const { safe: safeAddress, chainId } = Route.useSearch();
 	return (
 		<RequireWallet>
-			<QueuePageInner safeAddress={safeAddress} />
+			<QueuePageInner safeAddress={safeAddress} chainId={chainId} />
 		</RequireWallet>
 	);
 }
 
-function QueuePageInner({ safeAddress }: { safeAddress: string }) {
+function QueuePageInner({ safeAddress, chainId }: { safeAddress: string; chainId: string }) {
 	const provider = useWalletProvider();
 	const {
 		data: safeConfig,
@@ -257,5 +259,5 @@ function QueuePageInner({ safeAddress }: { safeAddress: string }) {
 		return <p className="text-center p-6 text-gray-600">Safe configuration not available.</p>;
 	}
 
-	return <QueueContent provider={provider} safeAddress={safeAddress} safeConfig={safeConfig} />;
+	return <QueueContent provider={provider} safeAddress={safeAddress} safeConfig={safeConfig} chainId={chainId} />;
 }

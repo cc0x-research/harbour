@@ -14,9 +14,10 @@ import { safeAddressSchema } from "../lib/validators";
 interface EnqueueContentProps {
 	provider: BrowserProvider;
 	safeAddress: string;
+	chainId: string;
 }
 
-function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
+function EnqueueContent({ provider, safeAddress, chainId }: EnqueueContentProps) {
 	const {
 		data: configResult,
 		isLoading: isLoadingConfig,
@@ -49,7 +50,6 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 
 		try {
 			setIsSubmitting(true);
-			const network = await provider.getNetwork();
 			const txNonce = nonce !== "" ? BigInt(nonce) : (configResult?.nonce ?? BigInt(0));
 
 			setChain({ chainId: HARBOUR_CHAIN_ID.toString() });
@@ -60,7 +60,7 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 				data: dataInput,
 				nonce: txNonce.toString(),
 				safeAddress,
-				chainId: network.chainId.toString(),
+				chainId,
 				operation: 0,
 				safeTxGas: "0",
 				baseGas: "0",
@@ -87,7 +87,7 @@ function EnqueueContent({ provider, safeAddress }: EnqueueContentProps) {
 		<div className="min-h-screen bg-gray-50">
 			<div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mb-8">
-					<BackToDashboardButton safeAddress={safeAddress} />
+					<BackToDashboardButton safeAddress={safeAddress} chainId={chainId} />
 					<h1 className="text-3xl font-bold text-gray-900 mt-4">Enqueue Transaction</h1>
 					<p className="text-gray-700 mt-2">
 						Safe: <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{safeAddress}</span>
@@ -254,21 +254,22 @@ export const Route = createFileRoute("/enqueue")({
 	validateSearch: zodValidator(
 		z.object({
 			safe: safeAddressSchema,
+			chainId: z.string(),
 		}),
 	),
 	component: EnqueuePage,
 });
 
 export function EnqueuePage() {
-	const { safe: safeAddress } = Route.useSearch();
+	const { safe: safeAddress, chainId } = Route.useSearch();
 	return (
 		<RequireWallet>
-			<EnqueuePageInner safeAddress={safeAddress} />
+			<EnqueuePageInner safeAddress={safeAddress} chainId={chainId} />
 		</RequireWallet>
 	);
 }
 
-function EnqueuePageInner({ safeAddress }: { safeAddress: string }) {
+function EnqueuePageInner({ safeAddress, chainId }: { safeAddress: string; chainId: string }) {
 	const provider = useWalletProvider();
-	return <EnqueueContent provider={provider} safeAddress={safeAddress} />;
+	return <EnqueueContent provider={provider} safeAddress={safeAddress} chainId={chainId} />;
 }
