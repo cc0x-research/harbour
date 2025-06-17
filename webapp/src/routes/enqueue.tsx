@@ -1,4 +1,4 @@
-import { safeIdSchema } from "@/lib/validators";
+import { ethereumAddressSchema, hexDataSchema, safeIdSchema } from "@/lib/validators";
 import { createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import type { BrowserProvider, JsonRpcApiProvider } from "ethers";
@@ -10,6 +10,7 @@ import { BatchTransactionForm } from "../components/transaction-forms/BatchTrans
 import { ERC20TransferForm } from "../components/transaction-forms/ERC20TransferForm";
 import { NativeTransferForm } from "../components/transaction-forms/NativeTransferForm";
 import { RawTransactionForm } from "../components/transaction-forms/RawTransactionForm";
+import { WalletConnectTransactionForm } from "../components/transaction-forms/WalletConnectTransactionForm";
 import { useChainlistRpcProvider } from "../hooks/useChainlistRpcProvider";
 import { useSafeConfiguration } from "../hooks/useSafeConfiguration";
 import type { ChainId } from "../lib/types";
@@ -19,9 +20,28 @@ interface EnqueueContentProps {
 	rpcProvider: JsonRpcApiProvider;
 	safeAddress: string;
 	chainId: ChainId;
-	flow?: "native" | "erc20" | "raw" | "batch";
+	flow?: "native" | "erc20" | "raw" | "batch" | "walletconnect";
 	tokenAddress?: string;
+	// Prefill fields for walletconnect flow
+	txTo?: string;
+	txValue?: string;
+	txData?: string;
+	wcApp?: string;
+	// WalletConnect request identifiers
+	topic?: string;
+	reqId?: string;
 }
+
+export const walletConnectParamsSchema = z.object({
+	txTo: ethereumAddressSchema.optional(),
+	txValue: z.string().optional(),
+	txData: hexDataSchema.optional(),
+	wcApp: z.string().optional(),
+	topic: z.string().optional(),
+	reqId: z.string().optional(),
+});
+
+export type WalletConnectParams = z.infer<typeof walletConnectParamsSchema>;
 
 /**
  * Content component for the enqueue transaction page.
@@ -34,6 +54,12 @@ function EnqueueContent({
 	chainId,
 	flow,
 	tokenAddress,
+	txTo,
+	txValue,
+	txData,
+	wcApp,
+	topic,
+	reqId,
 }: EnqueueContentProps) {
 	const {
 		data: config, // Renamed from configResult to config for clarity
@@ -52,6 +78,9 @@ function EnqueueContent({
 			break;
 		case "erc20":
 			pageTitle = "Enqueue ERC20 Token Transfer";
+			break;
+		case "walletconnect":
+			pageTitle = "Enqueue WalletConnect Transaction";
 			break;
 		default:
 			pageTitle = "Enqueue Raw Transaction";
@@ -92,6 +121,23 @@ function EnqueueContent({
 						browserProvider={browserProvider}
 						rpcProvider={rpcProvider}
 						config={config}
+					/>
+				);
+				break;
+			case "walletconnect":
+				formComponent = (
+					<WalletConnectTransactionForm
+						safeAddress={safeAddress}
+						chainId={chainId}
+						browserProvider={browserProvider}
+						rpcProvider={rpcProvider}
+						config={config}
+						txTo={txTo}
+						txData={txData}
+						txValue={txValue}
+						wcApp={wcApp}
+						topic={topic}
+						reqId={reqId}
 					/>
 				);
 				break;
@@ -142,10 +188,21 @@ function EnqueueContent({
 	);
 }
 
-const flowSchema = z.enum(["native", "erc20", "raw", "batch"]).optional().default("raw");
+// Added new "walletconnect" flow to support WalletConnect transaction requests
+const flowSchema = z.enum(["native", "erc20", "raw", "batch", "walletconnect"]).optional().default("raw");
+
+// Additional optional params used to pre-populate forms when the walletconnect flow is chosen.
 const enqueueSchema = safeIdSchema.extend({
 	flow: flowSchema,
 	tokenAddress: z.string().optional(),
+	// WalletConnect-specific search params
+	txTo: z.string().optional(),
+	txValue: z.string().optional(),
+	txData: z.string().optional(),
+	wcApp: z.string().optional(),
+	// WalletConnect request identifiers
+	topic: z.string().optional(),
+	reqId: z.string().optional(),
 });
 
 /**
@@ -162,26 +219,44 @@ export const Route = createFileRoute("/enqueue")({
  * Retrieves validated search params (including flow) and wraps content with wallet and provider requirements.
  */
 export function EnqueuePage() {
-	const { safe: safeAddress, chainId, flow, tokenAddress } = Route.useSearch();
+	const searchParams = Route.useSearch();
+
+	// Extract WalletConnect-specific params
+	const walletConnectParams: WalletConnectParams = {
+		txTo: searchParams.txTo,
+		txValue: searchParams.txValue,
+		txData: searchParams.txData,
+		wcApp: searchParams.wcApp,
+		topic: searchParams.topic,
+		reqId: searchParams.reqId,
+	};
+
 	return (
 		<RequireWallet>
-			<EnqueuePageInner safeAddress={safeAddress} chainId={Number(chainId)} flow={flow} tokenAddress={tokenAddress} />
+			<EnqueuePageInner
+				safeAddress={searchParams.safe}
+				chainId={Number(searchParams.chainId)}
+				flow={searchParams.flow}
+				tokenAddress={searchParams.tokenAddress}
+				walletConnectParams={walletConnectParams}
+			/>
 		</RequireWallet>
 	);
 }
 
-type TransactionFlow = z.infer<typeof flowSchema>;
+type TransactionFlowType = z.infer<typeof flowSchema>;
 
 interface EnqueuePageInnerProps {
 	safeAddress: string;
 	chainId: ChainId;
-	flow?: TransactionFlow;
+	flow?: TransactionFlowType;
 	tokenAddress?: string;
+	walletConnectParams: WalletConnectParams;
 }
 /**
  * Inner component for the enqueue page, rendered if wallet and providers are ready.
  */
-function EnqueuePageInner({ safeAddress, chainId, flow, tokenAddress }: EnqueuePageInnerProps) {
+function EnqueuePageInner({ safeAddress, chainId, flow, tokenAddress, walletConnectParams }: EnqueuePageInnerProps) {
 	const browserProvider = useWalletProvider();
 	const { provider: rpcProvider, error: rpcError, isLoading: isLoadingRpc } = useChainlistRpcProvider(chainId);
 
@@ -201,6 +276,7 @@ function EnqueuePageInner({ safeAddress, chainId, flow, tokenAddress }: EnqueueP
 			chainId={chainId}
 			flow={flow}
 			tokenAddress={tokenAddress}
+			{...walletConnectParams}
 		/>
 	);
 }
